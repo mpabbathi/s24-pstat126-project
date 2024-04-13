@@ -1,0 +1,13 @@
+---
+title: "Project Step 1"
+author: "Minu Pabbathi, Wendy Zhao, Paul Zhang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
