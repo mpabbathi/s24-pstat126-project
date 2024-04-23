@@ -6,7 +6,10 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = F)
+
+library(skimr)
+library(tidyverse)
 ```
 
 # Variable Descriptions
@@ -32,7 +35,6 @@ The variable `reason` is a categorical variable that lists the reason why the st
 # Data Summary
 
 ```{r}
-library(skimr)
 student_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/student/student-mat.csv", header = T)
 skim(student_data)
 
@@ -40,7 +42,44 @@ skim(student_data)
 
 # Graphs
 
+## Sex
+
+```{r}
+barplot(table(student_data$sex), xlab = "Sex", main = "Number of Students by Sex")
+```
+
+
+## Address
+
 ```{r}
 barplot(table(student_data$address), xlab = "Rural or Urban Area", ylab = "Frequency", main = "Students Living in Rural Areas vs. Urban Area")
+```
+
+## Parents' Jobs
+
+```{r}
+mjob <- table(student_data$Mjob)
+fjob <- table(student_data$Fjob)
+
+jobs <- rbind(mjob, fjob)
+
+barplot(jobs, beside = T, legend.text = c("Mother's Job", "Father's Job"), xlab = "Type of Job", main = "Mother's vs. Father's Job")
+```
+
+## Reason For Attending School
+
+```{r}
+barplot(table(student_data$reason), main = "Reasons for Choosing School", xlab = "Reason")
+```
+
+## Parents' Education
+
+```{r}
+medu <- table(student_data$Medu)
+fedu <- table(student_data$Fedu)
+
+edu <- rbind(medu, fedu)
+
+barplot(edu, beside = T, legend.text = c("Mother's Education", "Father's Education"), xlab = "Level of Education", main = "Mother's vs. Father's Education")
 ```
 
