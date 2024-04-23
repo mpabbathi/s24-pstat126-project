@@ -9,5 +9,38 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Variable Descriptions
 
+The variable `school` is a binary variable that states which school the student attends ('GP' or 'MS').
+
+The `sex` variable is a binary variable that lists the sex of the student ('M' or 'F').
+
+The `age` variable is numerical and lists the student's age from 15-22.
+
+The `address` variable is categorical and states whether the student lives in a rural (R) or urban (U) area.
+
+The `famsize` variable is a categorical variable that states whether the student's family is less than or equal 3 (LE3) or greater than 3 (GT3).
+
+`Pstatus`is a categorical variable that classifies parental cohabitation as living together (T) or living apart (A).
+
+`Medu` is a categorical variable that lists the student's mother's education level on a scale from 0-4. Similarly, the `Pedu` is a categorical variable that lists the student's father's education level on a scale from 0-4. 0 indicates none, 1 indicates primary education (4th grade), 2 indicates 5th to 9th grade, 3 indicates secondary education, and 4 indicates higher education.
+
+`Mjob` is a categorical variable that lists the student's mother's job. `Fjob` is similar but refers to the student's father's job. The categories include 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home', or 'other'.
+
+The variable `reason` is a categorical variable that lists the reason why the student decided to attend the school. The categories include close to 'home', school 'reputation', 'course' preference, or 'other'.
+
+# Data Summary
+
+```{r}
+library(skimr)
+student_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/student/student-mat.csv", header = T)
+skim(student_data)
+
+```
+
+# Graphs
+
+```{r}
+barplot(table(student_data$address), xlab = "Rural or Urban Area", ylab = "Frequency", main = "Students Living in Rural Areas vs. Urban Area")
+```
 
