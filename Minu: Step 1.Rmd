@@ -47,11 +47,15 @@ The resting blood pressure ranges from 94 to 200. The average resting blood pres
 hist(data$age, xlab = "Age", main = "Age of Patients", col = "thistle")
 ```
 
+Based on the histogram, the most common age group appears to be 55-60. The graph is slightly skewed to the left and the data is unimodal.
+
 ## Sex
 
 ```{r}
 barplot(table(data$sex), xlab = "Sex", main = "Sex of Patients", col = wes_palette("GrandBudapest2"))
 ```
+
+This barplot indicates that there are more men in the study than women.
 
 ## Chest Pain Type
 
@@ -59,6 +63,7 @@ barplot(table(data$sex), xlab = "Sex", main = "Sex of Patients", col = wes_palet
 barplot(table(data$cp), xlab = "Chest Pain Type", main = "Number of Reports of Each Chest Pain Type", names.arg = c("typical angina", "atypical angina", "non-anginal pain", "asymptomatic"), col = wes_palette("Royal2", 4))
 ```
 
+The barplot indicates that majority of patients experienced typical angina, followed by non-anginal pain, atypical angina, and asymptomatic patients.
 
 ## Resting Blood Pressure
 
@@ -66,3 +71,4 @@ barplot(table(data$cp), xlab = "Chest Pain Type", main = "Number of Reports of E
 boxplot(data$trestbps, horizontal = T, main = "Resting Blood Pressure", xlab = "Blood Pressure in mmHg", outline = F, col = "lightblue")
 ```
 
+The boxplot (outliers excluded) indicates that median resting blood pressure is around 130 and the data is evenly spread.
