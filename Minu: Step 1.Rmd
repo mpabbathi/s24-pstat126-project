@@ -3,8 +3,8 @@ title: "Project Step 1"
 author: "Minu Pabbathi"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,13 +14,12 @@ library(skimr)
 library(tidyverse)
 library(wesanderson)
 
-data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data.csv")
+data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
 ```
 
 # Variable Descriptions
 
-The `age` variable is a numeric variable that lists the age of the patient in years. The `sex` variable is a binary variable that states the sex of the patient, with 0 representing female and 1 representing male. The `chest.pain.type` variable is a categorical variable that classifies the type of chest pain the patient is experiencing; 1 represents typical angina, 2 represents atypical angina, 3 represents non-anginal pain, and 4 represents asymptomatic. The `resting.bp.s` variable is a numeric variable that states the resting blood pressure in mmHg.
-
+The `age` variable is a numeric variable that lists the age of the patient in years. The `sex` variable is a binary variable that states the sex of the patient, with 0 representing female and 1 representing male. The `chest.pain.type` variable is a categorical variable that classifies the type of chest pain the patient is experiencing; 0 represents typical angina, 1 represents atypical angina, 2 represents non-anginal pain, and 3 represents asymptomatic. The `resting.bp.s` variable is a numeric variable that states the resting blood pressure in mmHg.
 
 # Summary Statistics
 
@@ -30,15 +29,15 @@ The `age` variable is a numeric variable that lists the age of the patient in ye
 summary(data$age)
 ```
 
-The ages of the patients range from 28 to 77. The average age is 51.55 and the median age is 52.
+The ages of the patients range from 29 to 77. The average age is 54.02 and the median age is 55.
 
 ## Resting Blood Pressure
 
 ```{r}
-summary(data$resting.bp.s)
+summary(data$trestbps)
 ```
 
-The resting blood pressure ranges from 0 to 200. The average resting blood pressure is 132 mmHg and the median is 130 mmHg.
+The resting blood pressure ranges from 94 to 200. The average resting blood pressure is 132.5 mmHg and the median is 130 mmHg.
 
 # Graphical Representations
 
@@ -57,13 +56,13 @@ barplot(table(data$sex), xlab = "Sex", main = "Sex of Patients", col = wes_palet
 ## Chest Pain Type
 
 ```{r}
-barplot(table(data$chest.pain.type), xlab = "Chest Pain Type", main = "Number of Reports of Each Chest Pain Type", names.arg = c("typical angina", "atypical angina", "non-anginal pain", "asymptomatic"), col = wes_palette("Royal2", 4))
+barplot(table(data$cp), xlab = "Chest Pain Type", main = "Number of Reports of Each Chest Pain Type", names.arg = c("typical angina", "atypical angina", "non-anginal pain", "asymptomatic"), col = wes_palette("Royal2", 4))
 ```
 
 
 ## Resting Blood Pressure
 
 ```{r}
-boxplot(data$resting.bp.s, horizontal = T, main = "Resting Blood Pressure", xlab = "Blood Pressure in mmHg", outline = F, col = "lightblue")
+boxplot(data$trestbps, horizontal = T, main = "Resting Blood Pressure", xlab = "Blood Pressure in mmHg", outline = F, col = "lightblue")
 ```
 
