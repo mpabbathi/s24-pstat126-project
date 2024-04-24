@@ -1,0 +1,58 @@
+---
+title: "PSTAT 126 project report"
+author: "Paul Zhang"
+date: "Spring 2024/4/19"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+# knit options
+knitr::opts_chunk$set(echo = F,
+                      results = 'markup',
+                      fig.width = 4,
+                      fig.height = 3,
+                      fig.align = 'center',
+                      message = F,
+                      warning = F)
+
+# packages
+library(tidyverse)
+library(skimr)
+library(wesanderson)
+
+```
+
+# Variables
+
+## Exercise induced angina
+The variable "exang" indicates that if the patient have exercise induced angina (chest pain), which is shown with binary data "yes" or "no".
+```{r}
+barplot(table(heart_disease_data_1$exang), ylab = "Number of patients", main="Exercise induced angina")
+```
+
+## oldpeak = ST
+The variable "oldpeak" is a float type data records the ST depression, which is a measure of abnormality of an electrocardiogram, and the measurement is in unit depression. 
+```{r}
+barplot(table(heart_disease_data_1$oldpeak),xlab ="ST depression", ylab = "Number of patients", main="oldpeak = ST")
+```
+```{r}
+summary(heart_disease_data_1$oldpeak)
+```
+## ST slope
+The variable "ST slope" is the slope of the peak exercise ST segment, which is an electrocardiography read out indicating quality of blood flow to the heart, and the data are in nominal type including 0 (upsloping), 1 (flat) and 2 (downsloping).
+```{r}
+barplot(table(heart_disease_data_1$slope), ylab = "Number of patients", main="ST slope")
+```
+
+## Target
+The variable "target" is a binary data showing whether the patient is having heart disease (1 = having heart disease and 0 = normal).
+```{r}
+barplot(table(heart_disease_data_1$target), ylab = "Number of patients", main="Heart disease")
+```
+
+
+
+
+
