@@ -1,0 +1,91 @@
+---
+title: "pstats126 -Step1"
+author: "Ziqian Zhao"
+date: '2024-04-23'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# knit options
+knitr::opts_chunk$set(echo = F,
+                      results = 'markup',
+                      fig.width = 5,
+                      fig.height = 3,
+                      fig.align = 'center',
+                      message = F,
+                      warning = F)
+
+# packages
+library(tidyverse)
+library(faraway)
+library(skimr)
+library(readr)
+```
+
+```{r}
+heart_disease_data_1 <- read_delim("s24-pstat126-project/dataset/heart_disease_data_1.csv", 
+                                   delim = ",", escape_double = FALSE, trim_ws = TRUE)
+```
+# About the data
+
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It originally contains 76 attributes, including the predicted attribute, but all published experiments refer to using a subset of 14 of them. The data set originally contains 1025 observations. For the sake of clearness of the scatter plot, we randomly choose 500 from the original dataset. 
+
+# Data Description
+
+## Cholesterol 
+
+This data is a numeric data which give an overview of person's cholesterol levels.
+```{r}
+summary(heart_disease_data_1$chol)
+```
+```{r}
+barplot(table(heart_disease_data_1$chol), 
+        xlab = "Cholesterol", main = "Cholesterol Level")
+```
+
+## Fasting blood sugar
+
+This data is a binary data with 1 means the fast blood sugar is greater than 120mg/dl, and 0 means the fast blood sugar is not.
+
+| Binary | 1 (> 120 mg/dl) | 0 ($\leq$ 120mg/dl) |
+|:-------|:-------:|:------:|
+| Number |   82   |  418   |
+
+```{r}
+barplot(table(heart_disease_data_1$fbs), 
+        xlab = "Fasting blood sugar", main = "Fasting blood sugar")
+```
+
+## Resting Electrocardiogram 
+
+This data is a nomial data with scale of 0, 1, 2, which record the resting electrocardiogram results
+
+| Nominal | 0 | 1 | 2|
+|:-------|:-------:|:------:|------:|
+| Meaning |   normal   |  abnomality in ST-T waves   | Show left ventricular hypertrophy| 
+| No. of people |263|233|4|
+
+```{r}
+barplot(table(heart_disease_data_1$restecg), xlab = "Scale of Resting ECG", main = "Resting ECG")
+```
+## Max Heart Rate
+
+This data is a numeric dataset which records the maximum heart rate achieved.
+
+```{r}
+summary(heart_disease_data_1$thalach)
+```
+
+# Binary Raltionship
+
+The graph examines the relationship between serum cholestoral and maximum hearting rate. From the graph, we cannot conclude a linear relationship between these two variables. 
+
+```{r}
+plot(x=heart_disease_data_1$chol, y=heart_disease_data_1$thalach,
+     xlab = "Serum cholestoral in mg/dl",
+     ylab = "Maximum hearting rate achieved",
+     main = "Relationship between chol and heart rate")
+```
+
