@@ -1,0 +1,123 @@
+---
+title: "Project Step 1"
+author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# knit options
+knitr::opts_chunk$set(echo = F,
+                      results = 'markup',
+                      fig.width = 5,
+                      fig.height = 3,
+                      fig.align = 'center',
+                      message = F,
+                      warning = F)
+
+# packages
+library(tidyverse)
+library(faraway)
+library(skimr)
+library(readr)
+
+heart_disease_data_1 <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+```
+
+
+# About the data
+
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It originally contains 76 attributes, including the predicted attribute, but all published experiments refer to using a subset of 14 of them. The data set originally contains 1025 observations. For the sake of clearness of the scatter plot, we randomly choose 500 from the original dataset.
+
+
+# Data Description
+
+The `age` variable is a numeric variable that lists the age of the patient in years. The `sex` variable is a binary variable that states the sex of the patient, with 0 representing female and 1 representing male. The `chest.pain.type` variable is a categorical variable that classifies the type of chest pain the patient is experiencing; 0 represents typical angina, 1 represents atypical angina, 2 represents non-anginal pain, and 3 represents asymptomatic. The `resting.bp.s` variable is a numeric variable that states the resting blood pressure in mmHg.
+
+The `cholesterol` variable is a numeric data which give an overview of person's cholesterol levels. The `fasting blood sugar` variable is a binary data with 1 means the fast blood sugar is greater than 120mg/dl, and 0 means the fast blood sugar is not. The `resting electrocardigram` variable is a nominal data with scale of 0 (normal), 1 (abnormality in ST-T waves), and 2 (show left ventricular hypertrophy), which record the resting electrocardiogram results. The `maximum heart rate` variable is a numeric data which records the maximum heart rate achieved.
+
+The variable `exang` indicates that if the patient have exercise induced angina (chest pain), which is shown with binary data "yes" or "no". The variable `oldpeak` is a float type data records the ST depression, which is a measure of abnormality of an electrocardiogram, and the measurement is in unit depression. The variable `ST slope` is the slope of the peak exercise ST segment, which is an electrocardiography read out indicating quality of blood flow to the heart, and the data are in nominal type including 0 (upsloping), 1 (flat) and 2 (downsloping). Finally, the variable `target` is a binary data showing whether the patient is having heart disease (1 = having heart disease and 0 = normal).
+
+# Summary Statistics and Graphs
+
+## Age
+
+```{r}
+summary(heart_disease_data_1$age)
+```
+
+The ages of the patients range from 29 to 77. The average age is 54.02 and the median age is 55.
+
+## Resting Blood Pressure
+
+```{r}
+summary(heart_disease_data_1$trestbps)
+```
+
+The resting blood pressure ranges from 94 to 200. The average resting blood pressure is 132.5 mmHg and the median is 130 mmHg.
+
+## Cholesterol
+
+```{r}
+summary(heart_disease_data_1$chol)
+```
+
+## Resting Electrocardiogram
+
+| Nominal | 0 | 1 | 2|
+|:-------|:-------:|:------:|------:|
+| Meaning |   normal   |  abnomality in ST-T waves   | Show left ventricular hypertrophy| 
+| No. of people |263|233|4|
+
+## Max Heart Rate
+
+This data is a numeric dataset which records the maximum heart rate achieved.
+
+```{r}
+summary(heart_disease_data_1$thalach)
+```
+
+## Chest Pain Type
+
+```{r}
+barplot(table(heart_disease_data_1$cp), xlab = "Chest Pain Type", main = "Number of Reports of Each Chest Pain Type")
+```
+
+
+| 0 | 1 | 2 | 3 |
+----|---|----|-------
+|typical angina | atypical angina | non-anginal pain | asymptomatic|
+
+The barplot indicates that majority of patients experienced typical angina, followed by non-anginal pain, atypical angina, and asymptomatic patients.
+
+## Resting Blood Pressure
+
+```{r}
+boxplot(heart_disease_data_1$trestbps, horizontal = T, main = "Resting Blood Pressure", xlab = "Blood Pressure in mmHg", outline = F)
+```
+
+The boxplot (outliers excluded) indicates that median resting blood pressure is around 130 and the data is evenly spread.
+
+## Fasting Blood Sugar
+
+```{r}
+barplot(table(heart_disease_data_1$fbs), 
+        xlab = "Fasting blood sugar", main = "Fasting blood sugar",
+        names.arg = c("<= 120 mg/dl", "> 120 mg/dl"))
+```
+
+## Exercise induced angina
+
+```{r}
+barplot(table(heart_disease_data_1$exang), ylab = "Number of patients", main="Exercise induced angina",
+        names.arg = c("No", "Yes"))
+```
+
+## Target
+
+```{r}
+barplot(table(heart_disease_data_1$target), ylab = "Number of patients", main="Heart disease", names.arg = c("Normal", "Has Heart Disease"))
+```
+
