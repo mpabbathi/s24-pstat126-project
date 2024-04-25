@@ -29,7 +29,7 @@ heart_disease_data_1 <- read.csv("~/Documents/GitHub/s24-pstat126-project/datase
 
 # About the data
 
-This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It originally contains 76 attributes, including the predicted attribute, but all published experiments refer to using a subset of 14 of them. The data set originally contains 1025 observations. For the sake of clearness of the scatter plot, we randomly choose 500 from the original dataset.
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risks for heart disease as well as whether or not they eventually end up developing heart disease. The data set originally contains 1025 observations. For the sake of clearness of the scatter plot, we randomly choose 500 from the original dataset.
 
 
 # Data Description
