@@ -3,8 +3,9 @@ title: "Project Step 1"
 author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    latex_engine: xelatex
   html_document: default
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -45,44 +46,6 @@ The variable `exang` indicates that if the patient have exercise induced angina 
 
 ```{r}
 skim(heart_disease_data_1)
-```
-
-
-## Age
-
-```{r}
-summary(heart_disease_data_1$age)
-```
-
-The ages of the patients range from 29 to 77. The average age is 54.02 and the median age is 55.
-
-## Resting Blood Pressure
-
-```{r}
-summary(heart_disease_data_1$trestbps)
-```
-
-The resting blood pressure ranges from 94 to 200. The average resting blood pressure is 132.5 mmHg and the median is 130 mmHg.
-
-## Cholesterol
-
-```{r}
-summary(heart_disease_data_1$chol)
-```
-
-## Resting Electrocardiogram
-
-| Nominal | 0 | 1 | 2|
-|:-------|:-------:|:------:|------:|
-| Meaning |   normal   |  abnomality in ST-T waves   | Show left ventricular hypertrophy| 
-| No. of people |263|233|4|
-
-## Max Heart Rate
-
-This data is a numeric dataset which records the maximum heart rate achieved.
-
-```{r}
-summary(heart_disease_data_1$thalach)
 ```
 
 ## Chest Pain Type
