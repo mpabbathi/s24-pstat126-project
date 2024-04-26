@@ -3,8 +3,8 @@ title: "Project Step 1"
 author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(echo = F,
                       results = 'markup',
                       fig.width = 5,
-                      fig.height = 3,
+                      fig.height = 4,
                       fig.align = 'center',
                       message = F,
                       warning = F)
@@ -35,13 +35,18 @@ This data set dates from 1988 and consists of four databases: Cleveland, Hungary
 
 # Data Description
 
-The `age` variable is a numeric variable that lists the age of the patient in years. The `sex` variable is a binary variable that states the sex of the patient, with 0 representing female and 1 representing male. The `chest.pain.type` variable is a categorical variable that classifies the type of chest pain the patient is experiencing; 0 represents typical angina, 1 represents atypical angina, 2 represents non-anginal pain, and 3 represents asymptomatic. The `resting.bp.s` variable is a numeric variable that states the resting blood pressure in mmHg.
+The `age` variable is a numeric variable that lists the age of the patient in years. The `sex` variable is a binary variable that states the sex of the patient, with 0 representing female and 1 representing male. The `cp` variable is a categorical variable that classifies the type of chest pain the patient is experiencing; 0 represents typical angina, 1 represents atypical angina, 2 represents non-anginal pain, and 3 represents asymptomatic. The `trestbps` variable is a numeric variable that states the resting blood pressure in mmHg.
 
-The `cholesterol` variable is a numeric data which give an overview of person's cholesterol levels. The `fasting blood sugar` variable is a binary data with 1 means the fast blood sugar is greater than 120mg/dl, and 0 means the fast blood sugar is not. The `resting electrocardigram` variable is a nominal data with scale of 0 (normal), 1 (abnormality in ST-T waves), and 2 (show left ventricular hypertrophy), which record the resting electrocardiogram results. The `maximum heart rate` variable is a numeric data which records the maximum heart rate achieved.
+The `chol` variable is a numeric data which give an overview of person's cholesterol levels. The `fbs` variable is a binary data with 1 means the fast blood sugar is greater than 120mg/dl, and 0 means the fast blood sugar is not. The `restecg` variable is a nominal data with scale of 0 (normal), 1 (abnormality in ST-T waves), and 2 (show left ventricular hypertrophy), which record the resting electrocardiogram results. The `thalach` variable is a numeric data which records the maximum heart rate achieved.
 
-The variable `exang` indicates that if the patient have exercise induced angina (chest pain), which is shown with binary data "yes" or "no". The variable `oldpeak` is a float type data records the ST depression, which is a measure of abnormality of an electrocardiogram, and the measurement is in unit depression. The variable `ST slope` is the slope of the peak exercise ST segment, which is an electrocardiography read out indicating quality of blood flow to the heart, and the data are in nominal type including 0 (upsloping), 1 (flat) and 2 (downsloping). Finally, the variable `target` is a binary data showing whether the patient is having heart disease (1 = having heart disease and 0 = normal).
+The variable `exang` indicates that if the patient have exercise induced angina (chest pain), which is shown with 0 indicating "no" and 1 indicating "yes". The variable `oldpeak` is a float type data records the ST depression, which is a measure of abnormality of an electrocardiogram, and the measurement is in unit depression. The variable `slope` is the slope of the peak exercise ST segment, which is an electrocardiography read out indicating quality of blood flow to the heart, and the data are in nominal type including 0 (upsloping), 1 (flat) and 2 (downsloping). Finally, the variable `target` is a binary data showing whether the patient is having heart disease (1 = having heart disease and 0 = normal).
 
 # Summary Statistics and Graphs
+
+```{r}
+skim(heart_disease_data_1)
+```
+
 
 ## Age
 
@@ -105,26 +110,32 @@ The boxplot (outliers excluded) indicates that median resting blood pressure is 
 
 ```{r}
 barplot(table(heart_disease_data_1$fbs), 
-        xlab = "Fasting blood sugar", main = "Fasting blood sugar",
+        xlab = "Fasting Blood Sugar", main = "Fasting Blood Sugar",
         names.arg = c("<= 120 mg/dl", "> 120 mg/dl"))
 ```
 
-## Exercise induced angina
+The majority of patients had a fasting blood sugar of less than 120 mg/dl.
+
+## Exercise-Induced Angina
 
 ```{r}
-barplot(table(heart_disease_data_1$exang), ylab = "Number of patients", main="Exercise induced angina",
+barplot(table(heart_disease_data_1$exang), ylab = "Number of Patients", main="Exercise-Induced Angina",
         names.arg = c("No", "Yes"))
 ```
+
+Fewer patients experienced exercise-induced angina than not.
 
 ## Target
 
 ```{r}
-barplot(table(heart_disease_data_1$target), ylab = "Number of patients", main="Heart disease", names.arg = c("Normal", "Has Heart Disease"))
+barplot(table(heart_disease_data_1$target), ylab = "Number of Patients", main="Heart Disease", names.arg = c("Normal", "Has Heart Disease"))
 ```
+
+Roughly half of the patients were found to have heart disease and half were not.
 
 \newpage
 
-# Relationship
+# Relationships
 
 ## Correlation
 
@@ -138,4 +149,41 @@ ggcorrplot(corr,lab=F)
 ```
 
 The correlation matrix of numeric data shows that there isn't a strong positive correlation between any two variables, and between maximum heart rate achieved and target; a relatively strong negative correlation between ST slope and oldpeak; and little correlation between sex and cheast pain type, cholesterol and fasting blood sugar.
+
+## Exercise-Induced Angina vs. Target
+
+```{r, fig.width = 6}
+heart_disease_detected <- heart_disease_data_1[heart_disease_data_1$target == 1, ]
+barplot( table(heart_disease_detected$exang), names.arg = c("no", "yes"), main = "Exercise-Induced Angina in Patients with Heart Disease", xlab = "Presence of Exercise-Induced Angina")
+```
+
+Of patients with heart disease, the majority did not experience exercise-induced angina. This could imply that exercise-induced angina is not a major factor in predicting heart disease.
+
+## Chest Pain Type vs. Target
+
+```{r}
+barplot(table(heart_disease_detected$cp), names.arg = c("typical", "atypical", "non-anginal", "asymptomatic"), main = "Chest Pain Type in Patients with Heart Disease", xlab = "Type of Chest Pain")
+```
+
+Most patients with heart disease experienced non-anginal pain followed by atypical angina, typical angina, and no symptoms.
+
+## Maximum Heart Rate vs. Target
+
+```{r}
+no_heart_disease_detected <- heart_disease_data_1[heart_disease_data_1$target == 0, ]
+max_heart_rate_data <- cbind(no_heart_disease_detected$thalach, heart_disease_detected$thalach)
+boxplot(max_heart_rate_data, beside = T, names = c("No Heart Disease", "Heart Disease"), main = "Maximum Heart Rate in Patients \nWithout Heart Disease vs. With Heart Disease", outline = F)
+```
+
+When controlled for outliers, patients with heart disease tended to have higher maximum heart rates than patients without, indicating that maximum heart rate could be important in detecting heart disease.
+
+
+## Cholesterol vs. Target
+
+```{r}
+chol_data <- cbind(no_heart_disease_detected$chol, heart_disease_detected$chol)
+boxplot(chol_data, beside = T, names = c("No Heart Disease", "Heart Disease"), main = "Cholesterol in Patients Without Heart \nDisease vs. With Heart Disease", outline = F)
+```
+
+When controlled for outliers, cholesterol levels appear similar in patients with and without heart disease. In those with heart disease, cholesterol levels appear more evenly spread than those without heart disease.
 
