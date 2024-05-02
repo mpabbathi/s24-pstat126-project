@@ -25,7 +25,7 @@ res <- resid(fit)
 plot(fitted(fit), res) 
 
 # add a horizontal line at 0 
-abline(0,0) 
+abline(0,0)
 
 # checking normality of residuals
 qqnorm(res)
