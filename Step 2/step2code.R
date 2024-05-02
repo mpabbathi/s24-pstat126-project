@@ -10,10 +10,10 @@ summary(fit)
 
 # plotting model
 p <- ggplot(dataset, aes(x = age, y = thalach)) + geom_point() +
-  labs(x = 'Age', y = 'Max Heart Rate')
-p + geom_smooth(method = 'lm', 
-                formula = 'y ~ x',
-                se = F)
+  labs(x = 'Age', y = 'Max Heart Rate') + 
+  geom_smooth(method = 'lm', 
+        formula = 'y ~ x',
+        se = F)
 
 # checking normality of variables
 qqplot(dataset$age, dataset$thalach)
