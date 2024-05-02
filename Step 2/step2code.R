@@ -37,4 +37,3 @@ summary(fit2)
 
 res2 <- resid(fit2)
 qqnorm(res2)
-
