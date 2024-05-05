@@ -1,0 +1,75 @@
+---
+title: "Project Step2"
+author: "Ziqian Zhao"
+date: "2024-05-03"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# knit options
+knitr::opts_chunk$set(echo = F,
+                      results = 'markup',
+                      message = F,
+                      warning = F)
+
+
+# packages
+library(tidyverse)
+library(faraway)
+library(skimr)
+library(readr)
+library(plotly)
+library(readxl)
+heart_disease_data_1 <- read.csv("dataset/heart_disease_data_1.csv")
+```
+
+# Introuction
+
+# Scatter Plot
+
+```{r,fig.width=6, fig.height=6, fig.align='center', fig.cap='Fig.1 Relation between age and maximum heart rate achieve'}
+
+p <- ggplot(heart_disease_data_1, aes(x = age, y = thalach)) + geom_point() +
+  labs(x = 'Age', y = 'Max Heart Rate') + 
+  geom_smooth(method = 'lm', 
+        formula = 'y ~ x',
+        se = F)
+p
+```
+# Hypothesis Test
+
+$$
+H_0: \beta_1 = 0
+$$
+$$
+H_1: \beta_1 \neq 0
+$$
+
+# Analysis of p-value and confidence interval
+
+## p-value
+```{r}
+fit <- lm(formula = thalach ~ age, data = heart_disease_data_1)
+summary(fit)
+```
+
+
+
+From the summary table, we summarized the model as 
+$$
+\text{Heart Rate}_i = 206 - 1.03\cdot\text{Age}_i
+$$
+The p-value for $\beta_1 < 2\times10^{-16}$, so we reject null hypothesis and conclude that there is association between age and maximum heart rate achieved.
+
+
+## Construct Confidence interval
+
+```{r}
+b_bar = fit$coefficients[[2]]
+t = qt(p=0.025, df = 498, lower.tail = FALSE)
+conf.interval <- c(b_bar-0.1034*t, b_bar+0.1034*t)
+conf.interval
+```
+The confidence interval for $\beta_1$ is (-1.24,-0.83) at a significant level of 95%. This is to say that repeatedly estimating $\beta_1$ with same procedure, 95% of the estimation lies between this interval. Since 0 is not included in this interval, it is most likely that $\beta_1 \neq 0$. Therefore, we conclude that there is some association between age and maximum heart rate achieved.
