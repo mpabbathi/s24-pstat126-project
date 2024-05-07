@@ -22,7 +22,7 @@ qqplot(dataset$age, dataset$thalach)
 res <- resid(fit)
 
 # produce residual vs. fitted plot 
-plot(fitted(fit), res) 
+plot(fitted(fit), res)
 
 # add a horizontal line at 0 
 abline(0,0)
