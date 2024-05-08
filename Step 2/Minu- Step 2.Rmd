@@ -1,0 +1,45 @@
+---
+title: 'Minu: Step 2'
+author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      results = 'markup',
+                      fig.width = 5,
+                      fig.height = 4,
+                      fig.align = 'center',
+                      message = F,
+                      warning = F)
+
+library(ggplot2)
+heart_disease_data_1 <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+fit <- lm(formula = thalach ~ age, data = heart_disease_data_1)
+res <- resid(fit)
+```
+
+
+A Conclusion (Summarize your results. Comment on anything of interest that occurred
+in doing the project. Were the data approximately what you expected or did some of
+the results surprise you? What other questions would you like to ask about the data?)
+
+# Assessing Fit
+
+```{r, fig.width = 6}
+# produce residual vs. fitted plot
+par(mfrow = c(1, 2))
+plot(fitted(fit), res, xlab = "Fitted Values", ylab = "Residuals", main = "Fitted Values vs. Residuals")
+abline(0,0)
+hist(res, main = "Histogram of Residuals", xlab = "Residual Value")
+```
+
+When examining a plot of the residuals against the fitted values, the points appear to be randomly scattered, indicating that they have mostly constant variance and linearity. The histogram of the residuals appears slightly skewed to the left. However, it does not strongly deviate from a normal distribution enough to violate the assumptions of a linear model. Overall, the residuals indicate that the model is good fit and meets the four assumptions for inference.
+
+The $R^2$ value is 0.1722, meaning that approximately 17 percent of the variance in maximum heart rate is explained by age.
+
+# Conclusion
+
+- The results were mostly as expected. The relationship between age and maximum heart rate has been studied for a while, and our results are consistent with the literature.
+- potentially adding another predictor
