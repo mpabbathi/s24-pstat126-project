@@ -37,7 +37,7 @@ hist(res, main = "Histogram of Residuals", xlab = "Residual Value")
 
 When examining a plot of the residuals against the fitted values, the points appear to be randomly scattered, indicating that they have mostly constant variance and linearity. The histogram of the residuals appears slightly skewed to the left. However, it does not strongly deviate from a normal distribution enough to violate the assumptions of a linear model. Overall, the residuals indicate that the model is good fit and meets the four assumptions for inference.
 
-The $R^2$ value is 0.1722, meaning that approximately 17 percent of the variance in maximum heart rate is explained by age.
+The $R^2$ value is 0.167, meaning that approximately 17 percent of the variance in maximum heart rate is explained by age.
 
 # Conclusion
 

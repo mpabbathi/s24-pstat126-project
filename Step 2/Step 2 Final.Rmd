@@ -1,0 +1,116 @@
+---
+title: "PSTAT 126 Project Step 2"
+author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      results = 'markup',
+                      fig.width = 5,
+                      fig.height = 4,
+                      fig.align = 'center',
+                      message = F,
+                      warning = F)
+
+library(tidyverse)
+library(faraway)
+library(skimr)
+library(readr)
+library(plotly)
+library(readxl)
+
+heart_disease_data_1 <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+fit <- lm(formula = thalach ~ age, data = heart_disease_data_1)
+res <- resid(fit)
+```
+
+
+# Introduction
+
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risk factors for heart disease as well as whether or not they eventually end up developing heart disease. For the sake of convenience, we have randomly chosen 500 observations from the original data set. Here, we are going to investigate the relationship between the variable "age" and "maximum heart rate".
+
+# Assumptions
+
+To fit the data into a simple linear model, we will need to check that whether the residuals meet following assumptions:
+i) The residuals are normally distributed ($\varepsilon_i \sim N(0,\sigma^2)$);
+ii) the residuals have constant variance ($\text{Var}(\varepsilon_i)=\sigma^2$);
+iii) the residuals are independent from each other ($\varepsilon_i\perp\varepsilon_j$).
+
+# Scatter Plot of Age vs. Maximum Heart Rate
+
+```{r,fig.width=4, fig.height=3, fig.align='center', fig.cap='Relation between age and maximum heart rate achieved'}
+
+p <- ggplot(heart_disease_data_1, aes(x = age, y = thalach)) + geom_point() +
+  labs(x = 'Age', y = 'Max Heart Rate') + 
+  geom_smooth(method = 'lm', 
+        formula = 'y ~ x',
+        se = F)
+p
+```
+
+# Hypothesis Test
+
+To see if the slope is significant, we are going to do a two-tailed hypothesis test. The line of best fit should be 
+$$y_i = \beta_0 + \beta_1x_i$$
+where $\beta_0$ is the intercept and $\beta_1$ is the slope. If the slope is zero, it means that every observation has the same response which would be of no use. 
+
+Therefore, we are going to test if the slope $\beta_1$ is zero, and conclude the significance of the slope.
+
+$$
+H_0: \beta_1 = 0
+$$
+$$
+H_1: \beta_1 \neq 0
+$$
+
+
+
+# Analysis of p-value and confidence interval
+
+## p-value
+```{r}
+summary(fit)
+```
+
+
+From the summary table, we summarized the model as 
+$$
+\text{Heart Rate}_i = 206 - 1.03\cdot\text{Age}_i
+$$
+The p-value for $\beta_1 < 2\times10^{-16}$, so we reject null hypothesis and conclude that there is association between age and maximum heart rate achieved.
+
+
+## Construct Confidence interval
+
+```{r}
+b_bar = fit$coefficients[[2]]
+t = qt(p=0.025, df = 498, lower.tail = FALSE)
+conf.interval <- c(b_bar-0.1034*t, b_bar+0.1034*t)
+conf.interval
+```
+
+The confidence interval for $\beta_1$ is (-1.24,-0.83) at a significant level of 95%. This is to say that repeatedly estimating $\beta_1$ with same procedure, 95% of the estimation lies between this interval. Since 0 is not included in this interval, it is most likely that $\beta_1 \neq 0$. Therefore, we conclude that there is some association between age and maximum heart rate achieved.
+
+# Residual Analysis and $R^2$
+
+```{r, fig.height = 3, fig.width = 8, fig.cap = "Fitted Values vs. Residuals, Histogram of Residuals"}
+# produce residual vs. fitted plot
+par(mfrow = c(1, 3))
+plot(fitted(fit), res, xlab = "Fitted Values", ylab = "Residuals", main = "Fitted Values vs. Residuals")
+abline(0,0)
+hist(res, main = "Histogram of Residuals", xlab = "Residual Value")
+qqnorm(res)
+qqline(res)
+```
+
+When examining a plot of the residuals against the fitted values, the points appear to be randomly scattered, indicating that they have mostly constant variance and linearity. The histogram of the residuals appears slightly skewed to the left. However, it does not strongly deviate from a normal distribution enough to violate the assumptions of a linear model. Overall, the residuals indicate that the model is good fit and meets the four assumptions for inference.
+
+The $R^2$ value is 0.167, meaning that approximately 17 percent of the variance in maximum heart rate is explained by age.
+
+# Conclusion
+
+The results were mostly as expected. The relationship between age and maximum heart rate has been studied for a while, and our results are consistent with the literature. The residuals met the assumptions for inference - that is, they were normally distributed with $\mathbb{E} = 0$, had a constant variance of $\sigma^2$, and were independent. $\hat \beta_1$ was found to be -1.0335 with a 95% confidence interval (-1.24, -0.83), meaning our results were statistically significant. Ultimately, 17% of the variance in maximum heart rate was explained by age. Going forward, we would like to examine if adding another predictor changes the accuracy of the model.
