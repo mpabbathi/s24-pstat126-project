@@ -1,0 +1,26 @@
+---
+title: "Project Step 3"
+author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(GGally)
+library(modelr)
+heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+
+set.seed(7)
+
+partitioned_data <- heart_disease_data %>% resample_partition(p = c(train = 0.8, test = 0.2))
+```
+
+# Introduction
+
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risk factors for heart disease as well as whether or not they eventually end up developing heart disease. For the sake of convenience, we have randomly chosen 500 observations from the original data set. Here, we are going to investigate the relationship between the variable "age" and "maximum heart rate".
+
+```{r}
+ggpairs(heart_disease_data)
+```
+
