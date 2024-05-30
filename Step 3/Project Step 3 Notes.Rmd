@@ -11,8 +11,12 @@ library(GGally)
 library(modelr)
 library(tidyverse)
 library(broom)
-heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+library(MASS)
+heart_disease_data <- read.csv("s24-pstat126-project/dataset/heart_disease_data_1.csv")
 
+```
+
+```{r}
 set.seed(7)
 train_idx <- sample(1:nrow(heart_disease_data), 0.7 * nrow(heart_disease_data)) 
 train_data <- heart_disease_data[train_idx, ] 
@@ -21,11 +25,83 @@ test_data <- heart_disease_data[-train_idx, ]
 
 # Introduction
 
-This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risk factors for heart disease as well as whether or not they eventually end up developing heart disease. For the sake of convenience, we have randomly chosen 500 observations from the original data set. Here, we are going to investigate the relationship between the variable "age" and "maximum heart rate".
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risk factors for heart disease as well as whether or not they eventually end up developing heart disease. For the sake of convenience, we have randomly chosen 500 observations from the original data set. Here, we are going to further investigate the relationship between the response variable "maximum heart rate" and  other variables, identifying the variables that might be good predictors of the response variables, and using different techniques to select the optimal model in a statistical sense. 
 
-# Selecting Model
 
-Used a forward stepwise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
+# Model Selections from the correlation matrix
+
+From the correlation plot earlier, we see there is a relative strong correlation between `max heart rate (thalach)` and `age` and `chest pain type (cp)`. So our first model would involve these two variables and examine how much variation these two variable explained in terms of change in `max heart rate` as well as the interaction between these two variables.
+
+There are total 4 levels of `chest pain type`-- `typical angina`, `atypical angina`, ` non-anginal pain`, and `asymptomatic` labelled from 0 to 4. 
+
+Model1: 
+
+$$
+\text{max_heart_rate}_i = \beta_0 + \beta_1age_i + \beta_2cp_i  + \varepsilon_i
+$$
+
+Theoretical expected response should looks like: 
+
+$$
+\mathbb{E}[\text{max_heart_rate_i}] = \begin{cases}\beta_0 + \beta_1 age_i  &\text{if } cp = 0 \\ 
+\beta_0 + \beta_2 + \beta_1 age_i  &\text{if } cp = 1\\
+\beta_0 +2\beta_2 + \beta_1 age_i  &\text{if } cp = 2\\
+\beta_0 + 3\beta_2+ \beta_1 age_i  &\text{if } cp = 3
+\end{cases}
+$$
+
+Hypothetically, if the different chest pain types don't make significant differences in response, the intercept should not shift a lot. We can firstly visualize this relation in the following plots: 
+
+```{r,echo=FALSE}
+colors <- c("#FDAE61", 
+            "green",
+            "#F90123",
+            "blue")
+plot(x = train_data$age, y = train_data$thalach,
+     pch = 19,col = colors[factor(train_data$cp)],
+     xlab = "Age", ylab = "Maximum Heart Rate Achieve",
+     main = "Relationship between Age and Maximum Heart Rate ")
+legend("topright",c("typical angina","atypical angina","non-anginal pain","asymptomatic"), pch = 19,col = colors)
+
+type0 <- subset(train_data, cp == 0)
+type1 <- subset(train_data, cp == 1)
+type2 <- subset(train_data, cp == 2)
+type3 <- subset(train_data, cp == 3)
+abline(lm(thalach~age, data = type0),col="#FDAE61")
+abline(lm(thalach~age, data = type1),col="green")
+abline(lm(thalach~age, data = type2),col="#F90123")
+abline(lm(thalach~age, data = type3),col="blue")
+```
+
+From the graph, it could be seen that the best-fit line is shifting a lot, so it is highly likely for `chest pain type` to have significant association with `maximum heart rate` after taking care of `age`.
+
+```{r,echo=FALSE}
+mod1 = lm(thalach~age+as.factor(cp), data=train_data)
+summary(mod1)
+```
+
+From the statistics, it could be seen that both predictor has low p-value which indicate the significance of both predictor. To further interpret the model and coefficient, it is to say that it is estimated that the differences in `maximum heart rate(MHR)` between people of `atypical angina pain` and `typical angina pain` is about 21.5 bps; the differences in `MHR` between people of `non-anginal pain` and `typical angina pain` is about 14.45 bps; and the difference in `MHR` between people of `asymptomatic` and `typical angina` is about 21.54 bps after adjusting `age`.
+
+Also, from the plot, we could see that there is some slop changes between the best fit lines, so we are going to examine the interactions between variables.
+
+Model2:
+
+$$
+\text{max_heart_rate}_i = \beta_0 + \beta_1age_i + \beta_2cp_i  + \beta_3(age_i\cdot cp_i)+ \varepsilon_i
+$$
+
+```{r,echo=FALSE}
+mod_int = lm(thalach~age+as.factor(cp)+age*as.factor(cp),data=train_data)
+summary(mod_int)
+```
+
+From the statistics, we could see that the p-values for the interactions are large, which indicates that those predictors are not significant and thus we conclude that there is much interactions between `age` and `chest pain type`. Thus, we are not going to further consider interaction variables
+
+Another model that we are interested 
+
+# Statistical Approach for Selecting Model
+
+Used a forward step-wise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
 
 Criteria:
 
