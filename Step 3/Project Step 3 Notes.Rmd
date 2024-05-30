@@ -57,16 +57,16 @@ colors <- c("#FDAE61",
             "green",
             "#F90123",
             "blue")
-plot(x = train_data$age, y = train_data$thalach,
-     pch = 19,col = colors[factor(train_data$cp)],
+plot(x = heart_disease_data_1$age, y = heart_disease_data_1$thalach,
+     pch = 19,col = colors[factor(heart_disease_data_1$cp)],
      xlab = "Age", ylab = "Maximum Heart Rate Achieve",
      main = "Relationship between Age and Maximum Heart Rate ")
 legend("topright",c("typical angina","atypical angina","non-anginal pain","asymptomatic"), pch = 19,col = colors)
 
-type0 <- subset(train_data, cp == 0)
-type1 <- subset(train_data, cp == 1)
-type2 <- subset(train_data, cp == 2)
-type3 <- subset(train_data, cp == 3)
+type0 <- subset(heart_disease_data_1, cp == 0)
+type1 <- subset(heart_disease_data_1, cp == 1)
+type2 <- subset(heart_disease_data_1, cp == 2)
+type3 <- subset(heart_disease_data_1, cp == 3)
 abline(lm(thalach~age, data = type0),col="#FDAE61")
 abline(lm(thalach~age, data = type1),col="green")
 abline(lm(thalach~age, data = type2),col="#F90123")
@@ -76,7 +76,7 @@ abline(lm(thalach~age, data = type3),col="blue")
 From the graph, it could be seen that the best-fit line is shifting a lot, so it is highly likely for `chest pain type` to have significant association with `maximum heart rate` after taking care of `age`.
 
 ```{r,echo=FALSE}
-mod1 = lm(thalach~age+as.factor(cp), data=train_data)
+mod1 = lm(thalach~age+as.factor(cp), data=heart_disease_data_1)
 summary(mod1)
 ```
 
@@ -91,13 +91,92 @@ $$
 $$
 
 ```{r,echo=FALSE}
-mod_int = lm(thalach~age+as.factor(cp)+age*as.factor(cp),data=train_data)
+mod_int = lm(thalach~age+as.factor(cp)+age*as.factor(cp),data=heart_disease_data_1)
 summary(mod_int)
 ```
 
 From the statistics, we could see that the p-values for the interactions are large, which indicates that those predictors are not significant and thus we conclude that there is much interactions between `age` and `chest pain type`. Thus, we are not going to further consider interaction variables
 
-Another model that we are interested 
+Another model that we are interested is the relationship between `max heart rate` and `age` and `sex`. We first visualize the relationship.
+
+```{r}
+colors2 <- c("blue", 
+            "#DE3289")
+plot(x = heart_disease_data_1$age, y = heart_disease_data_1$thalach,
+     pch = 19,col = colors2[factor(heart_disease_data_1$sex)],
+     xlab = "Age", ylab = "Maximum Heart Rate Achieve",
+     main = "Relationship between Age and Maximum Heart Rate ")
+legend("topright",c("female","male"), pch = 19,col = colors2)
+
+female <- subset(heart_disease_data_1, sex == 0)
+male <- subset(heart_disease_data_1, sex == 1)
+abline(lm(thalach~age, data = female),col="blue")
+abline(lm(thalach~age, data = male),col="#DE3289")
+```
+
+```{r,echo=FALSE}
+mod_2 = lm(thalach~age+as.factor(sex),data=heart_disease_data_1)
+summary(mod_2)
+```
+
+```{r,echo=FALSE}
+mod_int_2 = lm(thalach~age+as.factor(sex)+age*as.factor(sex),data=heart_disease_data_1)
+summary(mod_int_2)
+```
+
+# Cross Validation
+
+```{r}
+set.seed(1)
+#Randomly shuffle the data
+heart_disease_data_1_shuffle<-heart_disease_data_1[sample(nrow(heart_disease_data_1)),]
+
+#Create 10 equally size folds
+folds <- cut(seq(1,nrow(heart_disease_data_1_shuffle)),breaks=5,labels=FALSE)
+```
+
+
+```{r}
+
+#folds<-createFolds(heart_disease_data_1,k=5)
+
+set.seed(1)
+#Randomly shuffle the data
+heart_disease_data_1_shuffle<-heart_disease_data_1[sample(nrow(heart_disease_data_1)),]
+
+#Create 10 equally size folds
+folds <- cut(seq(1,nrow(heart_disease_data_1_shuffle)),breaks=5,labels=FALSE)
+
+#Perform 10 fold cross validation
+MSE_all_1=c()
+MSE_all_2=c()
+for(i in 1:5){
+    #Segement your data by fold using the which() function 
+    testIndexes <- which(folds==i,arr.ind=TRUE)
+    testData <- heart_disease_data_1_shuffle[testIndexes, ]
+    trainData <- heart_disease_data_1_shuffle[-testIndexes, ]
+    model = lm(thalach~age+as.factor(cp)+
+                 age*as.factor(cp),data=trainData)
+    MSE = mse(model,testData)
+    MSE_all_1 <- c(MSE_all_1,MSE)
+    #Use the test and train data partitions however you desire...
+}
+for(i in 1:5){
+    #Segement your data by fold using the which() function 
+    testIndexes <- which(folds==i,arr.ind=TRUE)
+    testData <- heart_disease_data_1_shuffle[testIndexes, ]
+    trainData <- heart_disease_data_1_shuffle[-testIndexes, ]
+    model = lm(thalach~age+as.factor(sex)+
+                 age*as.factor(sex),data=trainData)
+    MSE = mse(model,testData)
+    MSE_all_2 <- c(MSE_all_2,MSE)
+    #Use the test and train data partitions however you desire...
+}
+mean(MSE_all_1)
+mean(MSE_all_2)
+```
+
+
 
 # Statistical Approach for Selecting Model
 
