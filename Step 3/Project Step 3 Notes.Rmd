@@ -6,13 +6,13 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library(GGally)
 library(modelr)
 library(tidyverse)
 library(broom)
 library(MASS)
-heart_disease_data <- read.csv("s24-pstat126-project/dataset/heart_disease_data_1.csv")
+heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
 
 ```
 
@@ -57,16 +57,16 @@ colors <- c("#FDAE61",
             "green",
             "#F90123",
             "blue")
-plot(x = heart_disease_data_1$age, y = heart_disease_data_1$thalach,
-     pch = 19,col = colors[factor(heart_disease_data_1$cp)],
+plot(x = heart_disease_data$age, y = heart_disease_data$thalach,
+     pch = 19,col = colors[factor(heart_disease_data$cp)],
      xlab = "Age", ylab = "Maximum Heart Rate Achieve",
      main = "Relationship between Age and Maximum Heart Rate ")
 legend("topright",c("typical angina","atypical angina","non-anginal pain","asymptomatic"), pch = 19,col = colors)
 
-type0 <- subset(heart_disease_data_1, cp == 0)
-type1 <- subset(heart_disease_data_1, cp == 1)
-type2 <- subset(heart_disease_data_1, cp == 2)
-type3 <- subset(heart_disease_data_1, cp == 3)
+type0 <- subset(heart_disease_data, cp == 0)
+type1 <- subset(heart_disease_data, cp == 1)
+type2 <- subset(heart_disease_data, cp == 2)
+type3 <- subset(heart_disease_data, cp == 3)
 abline(lm(thalach~age, data = type0),col="#FDAE61")
 abline(lm(thalach~age, data = type1),col="green")
 abline(lm(thalach~age, data = type2),col="#F90123")
@@ -76,7 +76,7 @@ abline(lm(thalach~age, data = type3),col="blue")
 From the graph, it could be seen that the best-fit line is shifting a lot, so it is highly likely for `chest pain type` to have significant association with `maximum heart rate` after taking care of `age`.
 
 ```{r,echo=FALSE}
-mod1 = lm(thalach~age+as.factor(cp), data=heart_disease_data_1)
+mod1 = lm(thalach~age+as.factor(cp), data=heart_disease_data)
 summary(mod1)
 ```
 
@@ -91,7 +91,7 @@ $$
 $$
 
 ```{r,echo=FALSE}
-mod_int = lm(thalach~age+as.factor(cp)+age*as.factor(cp),data=heart_disease_data_1)
+mod_int = lm(thalach~age+as.factor(cp)+age*as.factor(cp),data=heart_disease_data)
 summary(mod_int)
 ```
 
@@ -102,25 +102,25 @@ Another model that we are interested is the relationship between `max heart rate
 ```{r}
 colors2 <- c("blue", 
             "#DE3289")
-plot(x = heart_disease_data_1$age, y = heart_disease_data_1$thalach,
-     pch = 19,col = colors2[factor(heart_disease_data_1$sex)],
+plot(x = heart_disease_data$age, y = heart_disease_data$thalach,
+     pch = 19,col = colors2[factor(heart_disease_data$sex)],
      xlab = "Age", ylab = "Maximum Heart Rate Achieve",
      main = "Relationship between Age and Maximum Heart Rate ")
 legend("topright",c("female","male"), pch = 19,col = colors2)
 
-female <- subset(heart_disease_data_1, sex == 0)
-male <- subset(heart_disease_data_1, sex == 1)
+female <- subset(heart_disease_data, sex == 0)
+male <- subset(heart_disease_data, sex == 1)
 abline(lm(thalach~age, data = female),col="blue")
 abline(lm(thalach~age, data = male),col="#DE3289")
 ```
 
 ```{r,echo=FALSE}
-mod_2 = lm(thalach~age+as.factor(sex),data=heart_disease_data_1)
+mod_2 = lm(thalach~age+as.factor(sex),data=heart_disease_data)
 summary(mod_2)
 ```
 
 ```{r,echo=FALSE}
-mod_int_2 = lm(thalach~age+as.factor(sex)+age*as.factor(sex),data=heart_disease_data_1)
+mod_int_2 = lm(thalach~age+as.factor(sex)+age*as.factor(sex),data=heart_disease_data)
 summary(mod_int_2)
 ```
 
@@ -129,23 +129,23 @@ summary(mod_int_2)
 ```{r}
 set.seed(1)
 #Randomly shuffle the data
-heart_disease_data_1_shuffle<-heart_disease_data_1[sample(nrow(heart_disease_data_1)),]
+heart_disease_data_shuffle<-heart_disease_data[sample(nrow(heart_disease_data)),]
 
 #Create 10 equally size folds
-folds <- cut(seq(1,nrow(heart_disease_data_1_shuffle)),breaks=5,labels=FALSE)
+folds <- cut(seq(1,nrow(heart_disease_data_shuffle)),breaks=5,labels=FALSE)
 ```
 
 
 ```{r}
 
-#folds<-createFolds(heart_disease_data_1,k=5)
+#folds<-createFolds(heart_disease_data,k=5)
 
 set.seed(1)
 #Randomly shuffle the data
-heart_disease_data_1_shuffle<-heart_disease_data_1[sample(nrow(heart_disease_data_1)),]
+heart_disease_data_shuffle<-heart_disease_data[sample(nrow(heart_disease_data)),]
 
 #Create 10 equally size folds
-folds <- cut(seq(1,nrow(heart_disease_data_1_shuffle)),breaks=5,labels=FALSE)
+folds <- cut(seq(1,nrow(heart_disease_data_shuffle)),breaks=5,labels=FALSE)
 
 #Perform 10 fold cross validation
 MSE_all_1=c()
@@ -153,8 +153,8 @@ MSE_all_2=c()
 for(i in 1:5){
     #Segement your data by fold using the which() function 
     testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- heart_disease_data_1_shuffle[testIndexes, ]
-    trainData <- heart_disease_data_1_shuffle[-testIndexes, ]
+    testData <- heart_disease_data_shuffle[testIndexes, ]
+    trainData <- heart_disease_data_shuffle[-testIndexes, ]
     model = lm(thalach~age+as.factor(cp)+
                  age*as.factor(cp),data=trainData)
     MSE = mse(model,testData)
@@ -164,8 +164,8 @@ for(i in 1:5){
 for(i in 1:5){
     #Segement your data by fold using the which() function 
     testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- heart_disease_data_1_shuffle[testIndexes, ]
-    trainData <- heart_disease_data_1_shuffle[-testIndexes, ]
+    testData <- heart_disease_data_shuffle[testIndexes, ]
+    trainData <- heart_disease_data_shuffle[-testIndexes, ]
     model = lm(thalach~age+as.factor(sex)+
                  age*as.factor(sex),data=trainData)
     MSE = mse(model,testData)
