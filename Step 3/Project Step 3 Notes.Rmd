@@ -12,8 +12,14 @@ library(modelr)
 library(tidyverse)
 library(broom)
 library(MASS)
-heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
-
+heart_disease_data <- read.csv("s24-pstat126-project/dataset/heart_disease_data_1.csv")
+heart_disease_data$sex<-as.factor(heart_disease_data$sex)
+heart_disease_data$cp<-as.factor(heart_disease_data$cp)
+heart_disease_data$fbs<-as.factor(heart_disease_data$fbs)
+heart_disease_data$restecg<-as.factor(heart_disease_data$restecg)
+heart_disease_data$exang<-as.factor(heart_disease_data$exang)
+heart_disease_data$slope<-as.factor(heart_disease_data$slope)
+heart_disease_data$target<-as.factor(heart_disease_data$target)
 ```
 
 ```{r}
@@ -30,7 +36,7 @@ This data set dates from 1988 and consists of four databases: Cleveland, Hungary
 
 # Model Selections from the correlation matrix
 
-From the correlation plot earlier, we see there is a relative strong correlation between `max heart rate (thalach)` and `age` and `chest pain type (cp)`. So our first model would involve these two variables and examine how much variation these two variable explained in terms of change in `max heart rate` as well as the interaction between these two variables.
+From the correlation plot in step 1, we see there is a relative strong correlation between `max heart rate (thalach)` and `age` and `chest pain type (cp)`. So our first model would involve these two variables and examine how much variation these two variable explained in terms of change in `max heart rate` as well as the interaction between these two variables.
 
 There are total 4 levels of `chest pain type`-- `typical angina`, `atypical angina`, ` non-anginal pain`, and `asymptomatic` labelled from 0 to 4. 
 
@@ -84,8 +90,7 @@ From the statistics, it could be seen that both predictor has low p-value which 
 
 Also, from the plot, we could see that there is some slop changes between the best fit lines, so we are going to examine the interactions between variables.
 
-Model2:
-
+**add indicator varaibles and expand the interaction term**
 $$
 \text{max_heart_rate}_i = \beta_0 + \beta_1age_i + \beta_2cp_i  + \beta_3(age_i\cdot cp_i)+ \varepsilon_i
 $$
@@ -95,7 +100,7 @@ mod_int = lm(thalach~age+as.factor(cp)+age*as.factor(cp),data=heart_disease_data
 summary(mod_int)
 ```
 
-From the statistics, we could see that the p-values for the interactions are large, which indicates that those predictors are not significant and thus we conclude that there is much interactions between `age` and `chest pain type`. Thus, we are not going to further consider interaction variables
+From the statistics, we could see that the p-values for the interactions with cp1, which indicates that those predictors are not significant and thus we conclude that there is much interactions between `age` and `chest pain type`. Thus, we are not going to further consider interaction variables.
 
 Another model that we are interested is the relationship between `max heart rate` and `age` and `sex`. We first visualize the relationship.
 
@@ -114,32 +119,30 @@ abline(lm(thalach~age, data = female),col="blue")
 abline(lm(thalach~age, data = male),col="#DE3289")
 ```
 
-```{r,echo=FALSE}
-mod_2 = lm(thalach~age+as.factor(sex),data=heart_disease_data)
-summary(mod_2)
-```
+**Explanation: from the graph, we can see the interactions, so we diceided to include it**
 
 ```{r,echo=FALSE}
 mod_int_2 = lm(thalach~age+as.factor(sex)+age*as.factor(sex),data=heart_disease_data)
 summary(mod_int_2)
 ```
 
+**Explanation for final model**
+
 # Cross Validation
+
+**Add text**
 
 ```{r}
 set.seed(1)
 #Randomly shuffle the data
 heart_disease_data_shuffle<-heart_disease_data[sample(nrow(heart_disease_data)),]
 
-#Create 10 equally size folds
+#Create 5 equally size folds
 folds <- cut(seq(1,nrow(heart_disease_data_shuffle)),breaks=5,labels=FALSE)
 ```
 
-
 ```{r}
-
 #folds<-createFolds(heart_disease_data,k=5)
-
 set.seed(1)
 #Randomly shuffle the data
 heart_disease_data_shuffle<-heart_disease_data[sample(nrow(heart_disease_data)),]
@@ -183,8 +186,8 @@ mean(MSE_all_2)
 Used a forward step-wise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
 
 Criteria:
+- AIC - adding variables with lowest aic
 
-- AIC
 
 ```{r}
 model_null = lm(thalach ~ 1, data = train_data)
@@ -199,7 +202,7 @@ $F$ tests, $R^2$
 $\beta$ interpretation
 
 ```{r}
-fit <- lm(thalach ~ target + age + slope + exang + cp + trestbps + restecg, data = train_data)
+fit <- lm(thalach ~ slope + age + cp + exang + target + trestbps + restecg, data = train_data)
 summary(fit)
 y_pred <- predict(fit, newdata = test_data)
 ```
@@ -210,27 +213,20 @@ y_pred <- predict(fit, newdata = test_data)
 SS.total      <- sum((test_data$thalach - mean(test_data$thalach))^2)
 SS.residual   <- sum((test_data$thalach - y_pred)^2)
 SS.regression <- sum((y_pred - mean(test_data$thalach))^2)
-SS.total - (SS.regression+SS.residual)
+#SS.total - (SS.regression+SS.residual)
+
 SS.regression/SS.total
 ```
 
-## Residuals of Predicted Data
 
-```{r}
-res <- test_data$thalach - y_pred
-plot(res)
-abline(0, 0, col = "red")
-```
-
-
-# Plotting Predictions
-
-```{r}
+```{r,fig.cap="Plotting Prediciton"}
 plot(x = test_data$thalach, y = y_pred, xlab = "Observed Data", ylab = "Predicted Data")
 abline(a = 0, b = 1, lwd = 2, col = "green")
 ```
 
 # Checking Influential Points
+
+Selecting largest of each value:
 
 ```{r}
 p_caseinf <- augment(fit, train_data) %>%
@@ -241,12 +237,7 @@ p_caseinf <- augment(fit, train_data) %>%
   geom_hline(aes(yintercept = 0)) + # add line at zero
   theme(axis.text.x = element_text(angle = 90, vjust = 0.25)) + # rotates and aligns labels
   labs(x = '', y = '')
-p_caseinf
-```
 
-Selecting largest of each value:
-
-```{r}
 unusual_obs <- augment(fit, train_data) %>% 
   pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
   group_by(name) %>%
@@ -268,12 +259,7 @@ fit_dropped <- lm(thalach ~ target + age + slope + exang + cp + trestbps + reste
 summary(fit_dropped)
 ```
 
-Since `restecg` is no longer statistically significant, as an exercise, we refit the model without it.
-
-```{r}
-fit_dropped_2 <- lm(thalach ~ target + age + slope + exang + cp + trestbps, data = train_data[-unusual_idx, ])
-summary(fit_dropped_2)
-```
+**plot refer to lab 7 with/without influential points**
 
 # Model Interpretation
 
@@ -289,4 +275,6 @@ pred_ci <- train_data %>%
                      level = 0.95))
 ```
 
+# Conclusion
 
+We first examine two models with cross validation to determine the better one. Then we use forward step-wise model selection to determine our final model, which is [Model]. [Some statistics : R^2,]. We then conducted residual and influential point analysis, and compare the fit with and without influential points. [conclusion: change?]. Finally we calculated the confidence and prediction interval for our model. [Include stats]. 
