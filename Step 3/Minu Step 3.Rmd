@@ -1,0 +1,158 @@
+---
+title: "Minu Step 3"
+author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(GGally)
+library(modelr)
+library(tidyverse)
+library(broom)
+library(MASS)
+heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+heart_disease_data$sex<-as.factor(heart_disease_data$sex)
+heart_disease_data$cp<-as.factor(heart_disease_data$cp)
+heart_disease_data$fbs<-as.factor(heart_disease_data$fbs)
+heart_disease_data$restecg<-as.factor(heart_disease_data$restecg)
+heart_disease_data$exang<-as.factor(heart_disease_data$exang)
+heart_disease_data$slope<-as.factor(heart_disease_data$slope)
+heart_disease_data$target<-as.factor(heart_disease_data$target)
+
+set.seed(7)
+train_idx <- sample(1:nrow(heart_disease_data), 0.7 * nrow(heart_disease_data)) 
+train_data <- heart_disease_data[train_idx, ] 
+test_data <- heart_disease_data[-train_idx, ]
+```
+
+# To-do
+
+1. ~~change model formula~~
+
+2. ~~explain cross validation~~
+
+3. comment on R^2 for both fitted model and predicted values
+
+4. comment on influential points
+
+# Change Model Formulas
+
+add indicator variables and expand the interaction term
+
+Model 1: 
+
+$$
+\text{max_heart_rate}_i = \beta_0 + \beta_1age_i + \beta_2\mathbf{1}\{\text{cp}_i = 1\} + \beta_3\mathbf{1}\{\text{cp}_i = 2\}  + \beta_4\mathbf{1}\{\text{cp}_i = 3\} + \beta_5(age_i \cdot \mathbf{1}\{\text{cp}_i = 1\}) + \beta_6(age_i \cdot \mathbf{1}\{\text{cp}_i = 2\}) + \beta_7(age_i \cdot \mathbf{1}\{\text{cp}_i = 3\}) + \varepsilon_i
+$$
+
+# Cross Validation
+
+To compare the models, we conducted 5-fold cross-validation. The data was randomly shuffled and then separated into 5 folds. It was then trained on 4 of the folds and then tested on the 5th fold. This process was repeated so that each fold was used as a testing set once. 
+
+```{r}
+set.seed(1)
+#Randomly shuffle the data
+heart_disease_data_shuffle <- heart_disease_data[sample(nrow(heart_disease_data)), ]
+
+#Create 5 equally sized folds
+folds <- cut(seq(1,nrow(heart_disease_data_shuffle)),breaks = 5,labels = FALSE)
+
+#Perform 5 fold cross validation
+MSE_all_1 = c()
+MSE_all_2 = c()
+
+for(i in 1:5){
+    #Segment your data by fold using the which() function 
+    testIndexes <- which(folds==i,arr.ind=TRUE)
+    testData <- heart_disease_data_shuffle[testIndexes, ]
+    trainData <- heart_disease_data_shuffle[-testIndexes, ]
+    model = lm(thalach~age+as.factor(cp)+
+                 age*as.factor(cp),data=trainData)
+    MSE = mse(model,testData)
+    MSE_all_1 <- c(MSE_all_1,MSE)
+}
+
+for(i in 1:5){
+    #Segment your data by fold using the which() function 
+    testIndexes <- which(folds==i,arr.ind=TRUE)
+    testData <- heart_disease_data_shuffle[testIndexes, ]
+    trainData <- heart_disease_data_shuffle[-testIndexes, ]
+    model = lm(thalach~age+as.factor(sex)+
+                 age*as.factor(sex),data=trainData)
+    MSE = mse(model,testData)
+    MSE_all_2 <- c(MSE_all_2,MSE)
+}
+
+mean_mse_1 <- mean(MSE_all_1)
+mean_mse_2 <- mean(MSE_all_2)
+  
+print(paste("MSE for Model 1:", mean(MSE_all_1)))
+print(paste("MSE for Model 2:", mean(MSE_all_2)))
+```
+
+The mean MSE for model 1 is `r paste(round(mean_mse_1, 4))`, and the mean MSE for model 2 is `r paste(round(mean_mse_2, 4))`. Since the MSE for model 1 is lower, it is more accurate than model 2.
+
+# Fitting Model
+
+$R^2$
+
+About 48% of the variance in maximum heart rate is accounted for by the slope of the peak exercise ST segment, age, chest pain type, exercise-induced angina, heart disease, resting blood pressure, and resting ecg.
+
+```{r}
+fit <- lm(thalach ~ slope + age + cp + exang + target + trestbps + restecg, data = train_data)
+summary(fit)
+y_pred <- predict(fit, newdata = test_data)
+```
+
+## Finding $R^2$ of Predicted Values
+
+About 52% of the variance in maximum heart rate in the test data is accounted for by the slope of the peak exercise ST segment, age, chest pain type, exercise-induced angina, heart disease, resting blood pressure, and resting ecg.
+ 
+
+```{r}
+SS.total      <- sum((test_data$thalach - mean(test_data$thalach))^2)
+SS.residual   <- sum((test_data$thalach - y_pred)^2)
+SS.regression <- sum((y_pred - mean(test_data$thalach))^2)
+#SS.total - (SS.regression+SS.residual)
+
+SS.regression/SS.total
+```
+
+# Checking Influential Points
+
+To check outliers, leverage points, and influence points, we created graphs of the residuals, the diagonal values of the hat matrix, and Cook's distance. In each graph, we selected the largest value in red to visualize it on each plot.
+
+```{r}
+p_caseinf <- augment(fit, train_data) %>%
+  pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
+  ggplot(aes(x = .rownames, y = value)) +
+  facet_wrap(~ name, scales = 'free_y', nrow = 3) + # looks better with vertical faceting
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) + # add line at zero
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.25)) + # rotates and aligns labels
+  labs(x = '', y = '')
+
+unusual_obs <- augment(fit, train_data) %>% 
+  pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
+  group_by(name) %>%
+  slice_max(order_by = abs(value), n = 1) %>%
+  ungroup()
+
+p_caseinf + geom_point(data = unusual_obs, color = 'red')
+```
+
+We then refit the model without the influential point:
+
+```{r}
+unusual_idx <- augment(fit, train_data) %>%
+  mutate(idx = row_number()) %>%
+  slice_max(order_by = abs(.resid), n = 1) %>%
+  pull(idx)
+
+fit_dropped <- lm(thalach ~ slope + age + cp + exang + target + trestbps + restecg, data = train_data[-unusual_idx, ])
+summary(fit_dropped)
+```
+
+
