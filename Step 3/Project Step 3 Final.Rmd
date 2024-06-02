@@ -11,7 +11,8 @@ output:
 knitr::opts_chunk$set(echo = FALSE,
                       fig.width = 5,
                       fig.height = 4,
-                      fig.align = 'center')
+                      fig.align = 'center',
+                      messages = F)
 library(GGally)
 library(modelr)
 library(tidyverse)
@@ -235,6 +236,8 @@ abline(a = 0, b = 1, lwd = 2, col = "green")
 
 To check outliers, leverage points, and influence points, we created graphs of the residuals, the diagonal values of the hat matrix, and Cook's distance. In each graph, we selected the largest value in red to visualize it on each plot.
 
+The residuals appear randomly scattered with equal variance and no obvious pattern, and based on the Q-Q plot, are approximately normal, indicating that the model is a good fit.
+
 ```{r,fig.cap="Influential Points Analysis"}
 p_caseinf <- augment(fit, train_data) %>%
   pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
@@ -253,6 +256,13 @@ unusual_obs <- augment(fit, train_data) %>%
 
 p_caseinf + geom_point(data = unusual_obs, color = 'red')
 ```
+
+```{r, fig.cap = "Q-Q Plot of Residuals"}
+res <- resid(fit)
+qqnorm(res)
+qqline(res)
+```
+
 
 We then refit the model without the influential point:
 
@@ -284,7 +294,7 @@ p2<-ggplot(train_data[-unusual_idx, ], aes(x = age, y = thalach, color = cp)) +
 combined_plot <- grid.arrange(p1, p2, ncol = 2)
 ```
 
-From the plot and the best fit lines (Fig.5), the lines only change a little for the model with or without the influential points, so we shouldn't be concerned about those point affecting the results.
+From the plot and the best fit lines (Fig.6), the lines only change a little for the model with or without the influential points, so we shouldn't be concerned about those point affecting the results.
 
 # Model Interpretation
 
