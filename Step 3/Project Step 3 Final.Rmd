@@ -235,7 +235,7 @@ abline(a = 0, b = 1, lwd = 2, col = "green")
 
 To check outliers, leverage points, and influence points, we created graphs of the residuals, the diagonal values of the hat matrix, and Cook's distance. In each graph, we selected the largest value in red to visualize it on each plot.
 
-```{r,fig.cap="Inluenfial Points Analysis"}
+```{r,fig.cap="Influential Points Analysis"}
 p_caseinf <- augment(fit, train_data) %>%
   pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
   ggplot(aes(x = .rownames, y = value)) +
