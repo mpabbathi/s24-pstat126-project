@@ -49,7 +49,7 @@ There are total 4 levels of `chest pain type` -- `typical angina`, `atypical ang
 Model 1: 
 
 $$
-\textbf{max heart rate}_i = \beta_0 + \beta_1\textbf{age}_i + \beta_2\mathbf{1}\{cp_i=1\} + \beta_3\mathbf{1}\{cp_i=2\} + \beta_4\mathbf{1}\{cp_i=3\}\varepsilon_i
+\textbf{max heart rate}_i = \beta_0 + \beta_1\textbf{age}_i + \beta_2\mathbf{1}\{cp_i=1\} + \beta_3\mathbf{1}\{cp_i=2\} + \beta_4\mathbf{1}\{cp_i=3\} + \varepsilon_i
 $$
 
 Here, we are going to examine how different levels of `chest pain type` would make differences in the response -- `max heart rate` when holding `age` fixed; and whether there is an interaction between `age` and `chest pain type`. We visualize the relationship with graph (Fig.1).
