@@ -2,17 +2,22 @@
 title: "Project Step 3"
 author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.width = 5,
+                      fig.height = 4,
+                      fig.align = 'center')
 library(GGally)
 library(modelr)
 library(tidyverse)
 library(broom)
 library(MASS)
-heart_disease_data <- read.csv("s24-pstat126-project/dataset/heart_disease_data_1.csv")
+heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
 heart_disease_data$sex<-as.factor(heart_disease_data$sex)
 heart_disease_data$cp<-as.factor(heart_disease_data$cp)
 heart_disease_data$fbs<-as.factor(heart_disease_data$fbs)
@@ -34,31 +39,31 @@ test_data <- heart_disease_data[-train_idx, ]
 This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risk factors for heart disease as well as whether or not they eventually end up developing heart disease. For the sake of convenience, we have randomly chosen 500 observations from the original data set. Here, we are going to further investigate the relationship between the response variable "maximum heart rate" and  other variables, identifying the variables that might be good predictors of the response variables, and using different techniques to select the optimal model in a statistical sense. 
 
 
-# Model Selections from the correlation matrix
+# Model Selection from the Correlation Matrix
 
-From the correlation plot in step 1, we see there is a relative strong correlation between `max heart rate (thalach)` and `age` and `chest pain type (cp)`. So our first model would involve these two variables and examine how much variation these two variable explained in terms of change in `max heart rate` as well as the interaction between these two variables.
+From the correlation plot in step 1, we see that there is a relatively strong correlation between `max heart rate (thalach)`, `age`, and `chest pain type (cp)`. Oour first model thus involves these two variables and examines how much variation these two variables explain in terms of change in `max heart rate` as well as the interaction between these two variables.
 
-There are total 4 levels of `chest pain type`-- `typical angina`, `atypical angina`, ` non-anginal pain`, and `asymptomatic` labelled from 0 to 4. 
+There are total 4 levels of `chest pain type` -- `typical angina`, `atypical angina`, ` non-anginal pain`, and `asymptomatic` labelled from 0 to 4. 
 
-Model1: 
-
-$$
-\text{max_heart_rate}_i = \beta_0 + \beta_1age_i + \beta_2cp_i  + \varepsilon_i
-$$
-
-Theoretical expected response should looks like: 
+Model 1: 
 
 $$
-\mathbb{E}[\text{max_heart_rate_i}] = \begin{cases}\beta_0 + \beta_1 age_i  &\text{if } cp = 0 \\ 
+\text{max heart rate}_i = \beta_0 + \beta_1age_i + \beta_2cp_i  + \varepsilon_i
+$$
+
+The theoretical expected response should looks like: 
+
+$$
+\mathbb{E}[\text{max heart rate}_i] = \begin{cases}\beta_0 + \beta_1 age_i  &\text{if } cp = 0 \\ 
 \beta_0 + \beta_2 + \beta_1 age_i  &\text{if } cp = 1\\
 \beta_0 +2\beta_2 + \beta_1 age_i  &\text{if } cp = 2\\
 \beta_0 + 3\beta_2+ \beta_1 age_i  &\text{if } cp = 3
 \end{cases}
 $$
 
-Hypothetically, if the different chest pain types don't make significant differences in response, the intercept should not shift a lot. We can firstly visualize this relation in the following plots: 
+Hypothetically, if the different chest pain types don't make significant differences in response, the intercept should not shift a lot. We can first visualize this relation in the following plots: 
 
-```{r,echo=FALSE}
+```{r,echo=FALSE, fig.cap = "Age vs. Max Heart Rate color coded by chest pain type", fig.width = 5.25}
 colors <- c("#FDAE61", 
             "green",
             "#F90123",
@@ -67,7 +72,7 @@ plot(x = heart_disease_data$age, y = heart_disease_data$thalach,
      pch = 19,col = colors[factor(heart_disease_data$cp)],
      xlab = "Age", ylab = "Maximum Heart Rate Achieve",
      main = "Relationship between Age and Maximum Heart Rate ")
-legend("topright",c("typical angina","atypical angina","non-anginal pain","asymptomatic"), pch = 19,col = colors)
+legend("bottomleft",c("typical angina","atypical angina","non-anginal pain","asymptomatic"), pch = 19,col = colors, cex = 0.75)
 
 type0 <- subset(heart_disease_data, cp == 0)
 type1 <- subset(heart_disease_data, cp == 1)
@@ -79,20 +84,22 @@ abline(lm(thalach~age, data = type2),col="#F90123")
 abline(lm(thalach~age, data = type3),col="blue")
 ```
 
-From the graph, it could be seen that the best-fit line is shifting a lot, so it is highly likely for `chest pain type` to have significant association with `maximum heart rate` after taking care of `age`.
+From the graph, it can be seen that the best-fit line is shifting a lot, so it is highly likely for `chest pain type` to have significant association with `maximum heart rate` after taking care of `age`.
 
 ```{r,echo=FALSE}
 mod1 = lm(thalach~age+as.factor(cp), data=heart_disease_data)
 summary(mod1)
 ```
 
-From the statistics, it could be seen that both predictor has low p-value which indicate the significance of both predictor. To further interpret the model and coefficient, it is to say that it is estimated that the differences in `maximum heart rate(MHR)` between people of `atypical angina pain` and `typical angina pain` is about 21.5 bps; the differences in `MHR` between people of `non-anginal pain` and `typical angina pain` is about 14.45 bps; and the difference in `MHR` between people of `asymptomatic` and `typical angina` is about 21.54 bps after adjusting `age`.
+From the statistics, it can be seen that both predictors have low p-values which indicate the significance of both predictors. To further interpret the model and coefficient, it is estimated that the difference in `maximum heart rate(MHR)` between people of `atypical angina pain` and `typical angina pain` is about 21.5 bps; the difference in `MHR` between people of `non-anginal pain` and `typical angina pain` is about 14.45 bps; and the difference in `MHR` between people of `asymptomatic` and `typical angina` is about 21.54 bps after adjusting for `age`.
 
-Also, from the plot, we could see that there is some slop changes between the best fit lines, so we are going to examine the interactions between variables.
+Also, from the plot, we can see that there is some slope changes between the best fit lines, so we are going to examine the interactions between variables.
 
-**add indicator varaibles and expand the interaction term**
 $$
-\text{max_heart_rate}_i = \beta_0 + \beta_1age_i + \beta_2cp_i  + \beta_3(age_i\cdot cp_i)+ \varepsilon_i
+\begin{aligned}
+\text{max heart rate}_i = \beta_0 + \beta_1age_i + \beta_2\mathbf{1}\{\text{cp}_i = 1\} + \beta_3\mathbf{1}\{\text{cp}_i = 2\}  + \beta_4\mathbf{1}\{\text{cp}_i = 3\}\\
++ \beta_5(age_i \cdot \mathbf{1}\{\text{cp}_i = 1\}) + \beta_6(age_i \cdot \mathbf{1}\{\text{cp}_i = 2\}) + \beta_7(age_i \cdot \mathbf{1}\{\text{cp}_i = 3\}) + \varepsilon_i
+\end{aligned}
 $$
 
 ```{r,echo=FALSE}
@@ -100,11 +107,11 @@ mod_int = lm(thalach~age+as.factor(cp)+age*as.factor(cp),data=heart_disease_data
 summary(mod_int)
 ```
 
-From the statistics, we could see that the p-values for the interactions with cp1, which indicates that those predictors are not significant and thus we conclude that there is much interactions between `age` and `chest pain type`. Thus, we are not going to further consider interaction variables.
+From the statistics, we can see the p-values for the interactions with `cp1`, which indicate that those predictors are not significant and thus we conclude that there is not much interactions between `age` and `chest pain type`. Thus, we are not going to further consider interaction variables.
 
-Another model that we are interested is the relationship between `max heart rate` and `age` and `sex`. We first visualize the relationship.
+Another model that we are interested in is the relationship between `max heart rate`, `age`, and `sex`. We first visualize the relationship.
 
-```{r}
+```{r, fig.cap = "Age vs. Max Heart Rate color coded by gender", fig.width = 5.25}
 colors2 <- c("blue", 
             "#DE3289")
 plot(x = heart_disease_data$age, y = heart_disease_data$thalach,
@@ -119,42 +126,36 @@ abline(lm(thalach~age, data = female),col="blue")
 abline(lm(thalach~age, data = male),col="#DE3289")
 ```
 
-**Explanation: from the graph, we can see the interactions, so we diceided to include it**
+From the graph, we can see that the two best fit lines have a distinct trend, which could be a sign that `sex` is significantly related to `max heart rate` after taking care of `age`. In that case, we decided to analyze it as our second model and examine the interaction between variables.
+
+Model 2:
+$$\text{max heart rate}_i = \beta_0 + \beta_1age_i + \beta_2sex_i + \beta_3(age_i\cdot sex_i) + \varepsilon_i$$
 
 ```{r,echo=FALSE}
 mod_int_2 = lm(thalach~age+as.factor(sex)+age*as.factor(sex),data=heart_disease_data)
 summary(mod_int_2)
 ```
 
-**Explanation for final model**
+From the statistical summary, we can say that the interaction between `age` and `sex` are significant given the p-value is relatively small.
 
 # Cross Validation
 
-**Add text**
+To compare the models, we conducted 5-fold cross-validation. The data was randomly shuffled and then separated into 5 folds. It was then trained on 4 of the folds and then tested on the 5th fold. This process was repeated so that each fold was used as a testing set once. 
 
 ```{r}
 set.seed(1)
 #Randomly shuffle the data
-heart_disease_data_shuffle<-heart_disease_data[sample(nrow(heart_disease_data)),]
+heart_disease_data_shuffle <- heart_disease_data[sample(nrow(heart_disease_data)), ]
 
-#Create 5 equally size folds
-folds <- cut(seq(1,nrow(heart_disease_data_shuffle)),breaks=5,labels=FALSE)
-```
+#Create 5 equally sized folds
+folds <- cut(seq(1,nrow(heart_disease_data_shuffle)),breaks = 5,labels = FALSE)
 
-```{r}
-#folds<-createFolds(heart_disease_data,k=5)
-set.seed(1)
-#Randomly shuffle the data
-heart_disease_data_shuffle<-heart_disease_data[sample(nrow(heart_disease_data)),]
+#Perform 5 fold cross validation
+MSE_all_1 = c()
+MSE_all_2 = c()
 
-#Create 10 equally size folds
-folds <- cut(seq(1,nrow(heart_disease_data_shuffle)),breaks=5,labels=FALSE)
-
-#Perform 10 fold cross validation
-MSE_all_1=c()
-MSE_all_2=c()
 for(i in 1:5){
-    #Segement your data by fold using the which() function 
+    #Segment your data by fold using the which() function 
     testIndexes <- which(folds==i,arr.ind=TRUE)
     testData <- heart_disease_data_shuffle[testIndexes, ]
     trainData <- heart_disease_data_shuffle[-testIndexes, ]
@@ -162,10 +163,10 @@ for(i in 1:5){
                  age*as.factor(cp),data=trainData)
     MSE = mse(model,testData)
     MSE_all_1 <- c(MSE_all_1,MSE)
-    #Use the test and train data partitions however you desire...
 }
+
 for(i in 1:5){
-    #Segement your data by fold using the which() function 
+    #Segment your data by fold using the which() function 
     testIndexes <- which(folds==i,arr.ind=TRUE)
     testData <- heart_disease_data_shuffle[testIndexes, ]
     trainData <- heart_disease_data_shuffle[-testIndexes, ]
@@ -173,20 +174,24 @@ for(i in 1:5){
                  age*as.factor(sex),data=trainData)
     MSE = mse(model,testData)
     MSE_all_2 <- c(MSE_all_2,MSE)
-    #Use the test and train data partitions however you desire...
 }
-mean(MSE_all_1)
-mean(MSE_all_2)
+
+mean_mse_1 <- mean(MSE_all_1)
+mean_mse_2 <- mean(MSE_all_2)
+  
+print(paste("MSE for Model 1:", mean(MSE_all_1)))
+print(paste("MSE for Model 2:", mean(MSE_all_2)))
 ```
 
+The mean MSE for model 1 is `r paste(round(mean_mse_1, 4))`, and the mean MSE for model 2 is `r paste(round(mean_mse_2, 4))`. Since the MSE for model 1 is lower, it is more accurate than model 2.
 
 
 # Statistical Approach for Selecting Model
 
-Used a forward step-wise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
+We used a forward step-wise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
 
 Criteria:
-- AIC - adding variables with lowest aic
+ - AIC - which is adding variables with the lowest AIC value, starting with an intercept-only model.
 
 
 ```{r}
@@ -195,11 +200,9 @@ model_full = lm(thalach ~., data = train_data)
 step(model_null, direction="forward", scope=list(upper=model_full, lower=model_null), test = "F")
 ```
 
+By going through forward step-wise selection, we have added 7 predictors for the model, which are `slope`, `age`, `cp`, `exang`, `target`, `trestbps` and `restecg`. 
+
 # Fitting Model
-
-$F$ tests, $R^2$
-
-$\beta$ interpretation
 
 ```{r}
 fit <- lm(thalach ~ slope + age + cp + exang + target + trestbps + restecg, data = train_data)
@@ -207,7 +210,19 @@ summary(fit)
 y_pred <- predict(fit, newdata = test_data)
 ```
 
+Based on the significance tests with 0.1 $\alpha$-level, the coefficients were mostly all significant. The coefficients that were not found to be significant were still included since the other level of the predictor was significant.
+
+Based on the calculated $R^2$, about 48% of the variance in maximum heart rate is accounted for by the slope of the peak exercise ST segment, age, chest pain type, exercise-induced angina, heart disease, resting blood pressure, and resting ecg.
+
+$\beta$ interpretation:
+
+For predictor `target`, we can say that when the patient has heart disease (`target=1`), their mean maximum heart rate is estimated to be 8.42 bpm higher than those who dose not have heart disease, after accounting for the other predictors in the model.
+
+For predictor `exang`, we can say that when the patient has chest pain that is induced by exercise (`exang=1`), their mean maximum heart rate is estimated to be 8.12 bpm less than those who dose not have exercise induced chest pain, after accounting for the other predictors in the model.
+
 ## Finding $R^2$ of Predicted Values
+
+About 52% of the variance in maximum heart rate in the test data is accounted for by the slope of the peak exercise ST segment, age, chest pain type, exercise-induced angina, heart disease, resting blood pressure, and resting ecg.
 
 ```{r}
 SS.total      <- sum((test_data$thalach - mean(test_data$thalach))^2)
@@ -226,7 +241,7 @@ abline(a = 0, b = 1, lwd = 2, col = "green")
 
 # Checking Influential Points
 
-Selecting largest of each value:
+To check outliers, leverage points, and influence points, we created graphs of the residuals, the diagonal values of the hat matrix, and Cook's distance. In each graph, we selected the largest value in red to visualize it on each plot.
 
 ```{r}
 p_caseinf <- augment(fit, train_data) %>%
@@ -247,7 +262,7 @@ unusual_obs <- augment(fit, train_data) %>%
 p_caseinf + geom_point(data = unusual_obs, color = 'red')
 ```
 
-Fitting with and without influential points:
+We then refit the model without the influential point:
 
 ```{r}
 unusual_idx <- augment(fit, train_data) %>%
@@ -259,22 +274,125 @@ fit_dropped <- lm(thalach ~ target + age + slope + exang + cp + trestbps + reste
 summary(fit_dropped)
 ```
 
-**plot refer to lab 7 with/without influential points**
+```{r}
+# visualize
+p1<-ggplot(train_data, aes(x = age, y = thalach,color = cp)) + 
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE) +
+  ggtitle("Before ")
+
+p2<-ggplot(train_data[-unusual_idx, ], aes(x = age, y = thalach, color = cp)) + 
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE) +
+  ggtitle("After")
+```
+
+
+```{r,warning=FALSE,fig.cap="With/Without Influential Points",fig.width=8}
+library(gridExtra)
+combined_plot <- grid.arrange(p1, p2, ncol = 2)
+```
+
+From the plot and the best fit lines, the lines only change a little for the model with or without the influential points, so we shouldn't be concerned about those point affecting the results.
 
 # Model Interpretation
 
-[insert variable names here] might not have an impact on maximum heart rate.
+The final model we selected is 
+
+$$
+\begin{aligned}
+\textbf{max heart rate}_i = 169.5 - &0.096\cdot\textbf{1}\{slope_i = 1\}+12.3\cdot\textbf{1}\{slope_i=2\} -0.77\cdot \textbf{age}_i\\
+&+9.52\cdot\textbf{1}\{cp_i = 1\}+3.64\cdot\textbf{1}\{cp_i = 2\}+13.6\cdot\textbf{1}\{cp_i = 3\}\\
+&-8.78\cdot\textbf{1}\{exang_i = 1\} +6.2\cdot\textbf{1}\{target_i = 1\}+0.11\cdot\textbf{trestbps}_i\\
+&-2.5\cdot\textbf{1}\{restecg_i = 1\}-13.4\cdot\textbf{1}\{restecg_i = 2\}
+\end{aligned}
+$$
+
+From the statistical test, we determine that variables `slope`, `age`, `chest pain (cp)`, `exercise induced angina (exang)`, `target`, `resting blood pressure (trestbps)`, and `rest electrocardiographic results (restecg)` best explain the variation of `maximum heart rate`. Here, we are going to explain the coefficients of significance levels. 
+
+The difference in maximum heart rate between people at **upsloping** (slope = 2) and **downsloping** (slope = 0) of the peak exercise ST segment is estimated about 12.3 bpm after adjusting for all other variables. 
+
+For each unit increase in **age**, a decrease of 0.77 bpm in maximum heart rate is estimated while holding all other variable constant. 
+
+There should be expected an difference of 9.52 bpm in maximum heart rate between people with chest pain type of **atypical angina** and **typical angina** after holding all other variables constant; and there should also be an expected difference of 13.6 bpm in maximum heart rate between people without chest pain and **typical angina** after holding all other variable constant. 
+
+Comparing to people without **exercise induced angina** (exang = 0), it is expected an decrease of 8.78 bpm in maximum heart rate people with **exercise induced angina** after holding all other variables.
+
+People with **heart disease** (target = 1) are expected to have an approximately 6.20 higher bpm comparing to people who do not have **heart disease** (target = 0) after holding all other variables constant.
+
+For each unit (1 mmHg) increase in **resting blood pressure** , we expect a 0.11 increase in the maximum heart rate, holding all other variables constant.
 
 # Confidence Intervals and Prediction Intervals
 
-```{r}
+```{r,fig.cap=" Confidence Intervals and Prediction Intervals",fig.width=4,fig.height=4}
 pred_ci <- train_data %>%
   cbind(ci = predict(fit, 
                      newdata = train_data, 
                      interval = 'confidence', 
-                     level = 0.95))
+                     level = 0.90))
+pred_pi <- train_data %>%
+  cbind(ci = predict(fit, 
+                     newdata = train_data, 
+                     interval = 'predict', 
+                     level = 0.90))
+
+p <- ggplot(train_data, aes(x = age, y = thalach)) + 
+  geom_point() +
+  labs(x = 'Age',
+       y = 'Max Heart Rate')
+
+# compute prediction limits and append to grid
+p + geom_smooth(data = pred_ci,
+                #method = 'lm',
+              aes(y = ci.lwr),
+              color = 'red' ,
+              linetype = "dashed",
+              se = F) +
+  geom_smooth(data = pred_ci,
+              #method = 'lm',
+            aes(y = ci.upr),
+            color = 'red' ,
+            linetype = "dashed",
+            se = F)+
+  geom_smooth(data = pred_pi,
+              #method = 'lm',
+              aes(y = ci.lwr),
+              color = 'blue' ,
+              linetype = "dashed",
+              se = F) +
+  geom_smooth(data = pred_pi,
+              #method = 'lm',
+            aes(y = ci.upr),
+            color = 'blue' ,
+            linetype = "dashed",
+            se = F)
 ```
+
+The region between red lines is the confidence interval at 90% significance level and the region between blue lines is the prediction interval at 90% significance level.
+
+Confidence interval at 90% significance level: 
+```{r}
+head(pred_ci[c("ci.lwr","ci.upr")])
+```
+
+Prediction interval at 90% significance level:
+```{r}
+head(pred_pi[c("ci.lwr","ci.upr")])
+```
+
+From the graph (as well as the table), we can see a larger interval for the prediction interval because it also needs to quantifies the uncertainty for both estimates and variation in the response whereas confidence interval quantifies uncertainty due only to the model parameter estimation.
 
 # Conclusion
 
-We first examine two models with cross validation to determine the better one. Then we use forward step-wise model selection to determine our final model, which is [Model]. [Some statistics : R^2,]. We then conducted residual and influential point analysis, and compare the fit with and without influential points. [conclusion: change?]. Finally we calculated the confidence and prediction interval for our model. [Include stats]. 
+We first examined two models with cross validation to determine the better one. Then we used forward step-wise model selection to determine our final model, which is
+
+$$
+\begin{aligned}
+\textbf{max heart rate}_i = 169.5 - &0.096\cdot\textbf{1}\{slope_i = 1\}+12.3\cdot\textbf{1}\{slope_i=2\} -0.77\cdot \textbf{age}_i\\
+&+9.52\cdot\textbf{1}\{cp_i = 1\}+3.64\cdot\textbf{1}\{cp_i = 2\}+13.6\cdot\textbf{1}\{cp_i = 3\}\\
+&-8.78\cdot\textbf{1}\{exang_i = 1\} +6.2\cdot\textbf{1}\{target_i = 1\}+0.11\cdot\textbf{trestbps}_i\\
+&-2.5\cdot\textbf{1}\{restecg_i = 1\}-13.4\cdot\textbf{1}\{restecg_i = 2\}
+\end{aligned}
+$$
+
+with a $R^2 = 0.4935$, which means that our model captures nearly 50% of variation in the response. We then tested our model on test data and found a $R^2 = 0.5173$, which indicates that the model captured 51.73% of variation in the response. We then conducted residual and influential point analysis, and compared the fit with and without influential points. The fit overall did not change with or without the influential point. Finally we calculated the confidence and prediction interval for our model, which can be seen above.
