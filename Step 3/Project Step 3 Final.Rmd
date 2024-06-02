@@ -17,6 +17,7 @@ library(modelr)
 library(tidyverse)
 library(broom)
 library(MASS)
+library(gridExtra)
 heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
 heart_disease_data$sex<-as.factor(heart_disease_data$sex)
 heart_disease_data$cp<-as.factor(heart_disease_data$cp)
@@ -41,27 +42,17 @@ This data set dates from 1988 and consists of four databases: Cleveland, Hungary
 
 # Model Selection from the Correlation Matrix
 
-From the correlation plot in step 1, we see that there is a relatively strong correlation between `max heart rate (thalach)`, `age`, and `chest pain type (cp)`. Oour first model thus involves these two variables and examines how much variation these two variables explain in terms of change in `max heart rate` as well as the interaction between these two variables.
+From the correlation plot in step 1, we see that there is a relatively strong correlation between `max heart rate (thalach)`, `age`, and `chest pain type (cp)`. Our first model thus involves these two variables and examines how much variation these two variables explain in terms of change in `max heart rate` as well as the interaction between these two variables.
 
 There are total 4 levels of `chest pain type` -- `typical angina`, `atypical angina`, ` non-anginal pain`, and `asymptomatic` labelled from 0 to 4. 
 
 Model 1: 
 
 $$
-\text{max heart rate}_i = \beta_0 + \beta_1age_i + \beta_2cp_i  + \varepsilon_i
+\textbf{max heart rate}_i = \beta_0 + \beta_1\textbf{age}_i + \beta_2\mathbf{1}\{cp_i=1\} + \beta_3\mathbf{1}\{cp_i=2\} + \beta_4\mathbf{1}\{cp_i=3\}\varepsilon_i
 $$
 
-The theoretical expected response should looks like: 
-
-$$
-\mathbb{E}[\text{max heart rate}_i] = \begin{cases}\beta_0 + \beta_1 age_i  &\text{if } cp = 0 \\ 
-\beta_0 + \beta_2 + \beta_1 age_i  &\text{if } cp = 1\\
-\beta_0 +2\beta_2 + \beta_1 age_i  &\text{if } cp = 2\\
-\beta_0 + 3\beta_2+ \beta_1 age_i  &\text{if } cp = 3
-\end{cases}
-$$
-
-Hypothetically, if the different chest pain types don't make significant differences in response, the intercept should not shift a lot. We can first visualize this relation in the following plots: 
+Here, we are going to examine how different levels of `chest pain type` would make differences in the response -- `max heart rate` when holding `age` fixed; and whether there is an interaction between `age` and `chest pain type`. We visualize the relationship with graph (Fig.1).
 
 ```{r,echo=FALSE, fig.cap = "Age vs. Max Heart Rate color coded by chest pain type", fig.width = 5.25}
 colors <- c("#FDAE61", 
@@ -84,7 +75,7 @@ abline(lm(thalach~age, data = type2),col="#F90123")
 abline(lm(thalach~age, data = type3),col="blue")
 ```
 
-From the graph, it can be seen that the best-fit line is shifting a lot, so it is highly likely for `chest pain type` to have significant association with `maximum heart rate` after taking care of `age`.
+From the graph (Fig.1), it can be seen that the best-fit line is shifting a lot, so it is highly likely for `chest pain type` to have significant association with `maximum heart rate` after taking care of `age`.
 
 ```{r,echo=FALSE}
 mod1 = lm(thalach~age+as.factor(cp), data=heart_disease_data)
@@ -109,7 +100,7 @@ summary(mod_int)
 
 From the statistics, we can see the p-values for the interactions with `cp1`, which indicate that those predictors are not significant and thus we conclude that there is not much interactions between `age` and `chest pain type`. Thus, we are not going to further consider interaction variables.
 
-Another model that we are interested in is the relationship between `max heart rate`, `age`, and `sex`. We first visualize the relationship.
+Another model that we are interested in is the relationship between `max heart rate`, `age`, and `sex`. We first visualize the relationship (Fig.2).
 
 ```{r, fig.cap = "Age vs. Max Heart Rate color coded by gender", fig.width = 5.25}
 colors2 <- c("blue", 
@@ -126,7 +117,7 @@ abline(lm(thalach~age, data = female),col="blue")
 abline(lm(thalach~age, data = male),col="#DE3289")
 ```
 
-From the graph, we can see that the two best fit lines have a distinct trend, which could be a sign that `sex` is significantly related to `max heart rate` after taking care of `age`. In that case, we decided to analyze it as our second model and examine the interaction between variables.
+From the graph (Fig.2), we can see that the two best fit lines have a distinct trend, which could be a sign that `sex` is significantly related to `max heart rate` after taking care of `age`. In that case, we decided to analyze it as our second model and examine the interaction between variables.
 
 Model 2:
 $$\text{max heart rate}_i = \beta_0 + \beta_1age_i + \beta_2sex_i + \beta_3(age_i\cdot sex_i) + \varepsilon_i$$
@@ -190,8 +181,7 @@ The mean MSE for model 1 is `r paste(round(mean_mse_1, 4))`, and the mean MSE fo
 
 We used a forward step-wise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
 
-Criteria:
- - AIC - which is adding variables with the lowest AIC value, starting with an intercept-only model.
+Our criteria for choosing the variables is based on the AIC, meaning that starting with an intercept-only model, we add the variable with the lowest AIC value at a time, then re-examine the new model to find the next variable until no variables significant.
 
 
 ```{r}
@@ -200,7 +190,7 @@ model_full = lm(thalach ~., data = train_data)
 step(model_null, direction="forward", scope=list(upper=model_full, lower=model_null), test = "F")
 ```
 
-By going through forward step-wise selection, we have added 7 predictors for the model, which are `slope`, `age`, `cp`, `exang`, `target`, `trestbps` and `restecg`. 
+By going through forward step-wise selection, we can see that the AIC value for the model is decreasing, which means that model is improved. We finally choose 7 predictors for the model, which are `slope`, `age`, `cp`, `exang`, `target`, `trestbps` and `restecg`. 
 
 # Fitting Model
 
@@ -214,7 +204,7 @@ Based on the significance tests with 0.1 $\alpha$-level, the coefficients were m
 
 Based on the calculated $R^2$, about 48% of the variance in maximum heart rate is accounted for by the slope of the peak exercise ST segment, age, chest pain type, exercise-induced angina, heart disease, resting blood pressure, and resting ecg.
 
-$\beta$ interpretation:
+**$\beta$ interpretation:**
 
 For predictor `target`, we can say that when the patient has heart disease (`target=1`), their mean maximum heart rate is estimated to be 8.42 bpm higher than those who dose not have heart disease, after accounting for the other predictors in the model.
 
@@ -230,7 +220,9 @@ SS.residual   <- sum((test_data$thalach - y_pred)^2)
 SS.regression <- sum((y_pred - mean(test_data$thalach))^2)
 #SS.total - (SS.regression+SS.residual)
 
-SS.regression/SS.total
+R2<-SS.regression/SS.total
+
+print(paste("R-square value on test data:", R2))
 ```
 
 
@@ -243,7 +235,7 @@ abline(a = 0, b = 1, lwd = 2, col = "green")
 
 To check outliers, leverage points, and influence points, we created graphs of the residuals, the diagonal values of the hat matrix, and Cook's distance. In each graph, we selected the largest value in red to visualize it on each plot.
 
-```{r}
+```{r,fig.cap="Inluenfial Points Analysis"}
 p_caseinf <- augment(fit, train_data) %>%
   pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
   ggplot(aes(x = .rownames, y = value)) +
@@ -278,22 +270,21 @@ summary(fit_dropped)
 # visualize
 p1<-ggplot(train_data, aes(x = age, y = thalach,color = cp)) + 
   geom_point() +
-  geom_smooth(method = 'lm', se = FALSE) +
+  geom_smooth(method = 'lm', formula = y ~ x,se = FALSE) +
   ggtitle("Before ")
 
 p2<-ggplot(train_data[-unusual_idx, ], aes(x = age, y = thalach, color = cp)) + 
   geom_point() +
-  geom_smooth(method = 'lm', se = FALSE) +
+  geom_smooth(method = 'lm', formula = y ~ x,se = FALSE) +
   ggtitle("After")
 ```
 
 
 ```{r,warning=FALSE,fig.cap="With/Without Influential Points",fig.width=8}
-library(gridExtra)
 combined_plot <- grid.arrange(p1, p2, ncol = 2)
 ```
 
-From the plot and the best fit lines, the lines only change a little for the model with or without the influential points, so we shouldn't be concerned about those point affecting the results.
+From the plot and the best fit lines (Fig.5), the lines only change a little for the model with or without the influential points, so we shouldn't be concerned about those point affecting the results.
 
 # Model Interpretation
 
@@ -343,25 +334,29 @@ p <- ggplot(train_data, aes(x = age, y = thalach)) +
 
 # compute prediction limits and append to grid
 p + geom_smooth(data = pred_ci,
-                #method = 'lm',
+                method = 'loess',
+                formula = 'y ~ x',
               aes(y = ci.lwr),
               color = 'red' ,
               linetype = "dashed",
               se = F) +
   geom_smooth(data = pred_ci,
-              #method = 'lm',
+              method = 'loess',
+              formula = 'y ~ x',
             aes(y = ci.upr),
             color = 'red' ,
             linetype = "dashed",
             se = F)+
   geom_smooth(data = pred_pi,
-              #method = 'lm',
+              method = 'loess',
+              formula = 'y ~ x',
               aes(y = ci.lwr),
               color = 'blue' ,
               linetype = "dashed",
               se = F) +
   geom_smooth(data = pred_pi,
-              #method = 'lm',
+              method = 'loess',
+              formula = 'y ~ x',
             aes(y = ci.upr),
             color = 'blue' ,
             linetype = "dashed",
