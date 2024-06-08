@@ -54,23 +54,23 @@ abline(1, 1)
 
 # fitting ols model
 fit <- lm(thalach ~ slope + age + cp + exang + target + trestbps + restecg, data = train_data)
-y_pred_ols <- predict(fit, newdata = test_data)
+y_pred_mlr <- predict(fit, newdata = test_data)
 
 # combining data frames
 y_pred_lasso <- as.data.frame(y_pred_lasso)
 y_pred_ridge <- as.data.frame(y_pred_ridge)
-y_pred_ols <- as.data.frame(y_pred_ols)
+y_pred_mlr <- as.data.frame(y_pred_mlr)
 y_observed_og <- test_data$thalach
 
 colnames(y_pred_lasso) <- c("values")
 colnames(y_pred_ridge) <- c("values")
-colnames(y_pred_ols) <- c("values")
+colnames(y_pred_mlr) <- c("values")
 
 y_pred_lasso$Source <- rep("Lasso", length(y_pred_lasso))
 y_pred_ridge$Source <- rep("Ridge", length(y_pred_ridge))
-y_pred_ols$Source <- rep("MLR", length(y_pred_ols))
+y_pred_mlr$Source <- rep("MLR", length(y_pred_mlr))
 
-combined_preds_og <- rbind(y_pred_lasso, y_pred_ridge, y_pred_ols)
+combined_preds_og <- rbind(y_pred_lasso, y_pred_ridge, y_pred_mlr)
 y_observed <-rep(y_observed_og, 3)
 combined_preds <- cbind(y_observed, combined_preds_og)
 
