@@ -15,7 +15,7 @@ train_data <- heart_disease_data[train_idx, ]
 test_data <- heart_disease_data[-train_idx, ]
 
 # lasso regression
-require(glmnet)
+library(glmnet)
 y <- train_data$thalach
 x <- scale(data.matrix(train_data[ , -8]))
 lasso_model <- cv.glmnet(x, y, alpha = 1)
@@ -80,3 +80,43 @@ library(ggplot2)
 combined_plot <- ggplot(combined_preds, aes(x = y_observed, y = values, color = Source)) +
   geom_point() + 
   labs(x = "Observed Values", y = "Predicted Values")
+
+# INNOVATION !!
+# using logistic regression to determine probability of heart disease, this way we can use a binary variable as
+# response variable e.g. target
+
+# variable selection using lasso regression
+x_log <- model.matrix(target ~ ., data = train_data)[, -14]
+y_log <- train_data$target
+
+# Fit lasso model using cross-validation to find optimal lambda
+lasso_model_log <- cv.glmnet(x_log, y_log, family = "binomial", alpha = 1)
+
+# Optimal lambda
+lambda_optimal_log <- lasso_model_log$lambda.min
+
+# Coefficients at optimal lambda
+coef(lasso_model_log, s = lambda_optimal_log)
+
+log_model <- glm(target ~ age + sex + cp + trestbps + fbs + restecg + thalach + exang + slope + ca + thal, data = train_data, family = binomial)
+summary(log_model)
+
+# ROC Curve
+library(pROC)
+predicted_prob <- predict(log_model, type = "response")
+roc_curve <- roc(train_data$target, predicted_prob)
+plot(roc_curve, main = "ROC Curve")
+
+# The closer the ROC curve is to the top-left corner, the better the model is at distinguishing
+# between positive and negative classes.
+
+# A model with no discriminative power will have an ROC curve along the diagonal line (FPR = TPR).
+
+# AUC Values:
+# 0.5: No discriminative power (equivalent to random guessing).
+# 0.5-0.7: Poor discrimination.
+# 0.7-0.8: Acceptable discrimination.
+# 0.8-0.9: Excellent discrimination.
+# >0.9: Outstanding discrimination.
+
+auc(roc_curve)
