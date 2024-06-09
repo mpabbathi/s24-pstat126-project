@@ -1,0 +1,201 @@
+---
+title: "Step 4-Wendy"
+author: "Ziqian Zhao"
+date: "2024-06-09"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.width = 5,
+                      fig.height = 4,
+                      fig.align = 'center')
+library(GGally)
+library(modelr)
+library(tidyverse)
+library(broom)
+library(MASS)
+library(ggplot2)
+```
+
+```{r}
+# load dataset
+heart_disease_data <- read.csv("~/Desktop/2024 Spring/PSTAT 126/Project/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+heart_disease_data$sex<-as.factor(heart_disease_data$sex)
+heart_disease_data$cp<-as.factor(heart_disease_data$cp)
+heart_disease_data$fbs<-as.factor(heart_disease_data$fbs)
+heart_disease_data$restecg<-as.factor(heart_disease_data$restecg)
+heart_disease_data$exang<-as.factor(heart_disease_data$exang)
+heart_disease_data$slope<-as.factor(heart_disease_data$slope)
+heart_disease_data$target<-as.factor(heart_disease_data$target)
+```
+
+
+```{r}
+# split data into training and testing
+set.seed(7)
+train_idx <- sample(1:nrow(heart_disease_data), 0.8 * nrow(heart_disease_data)) 
+train_data <- heart_disease_data[train_idx, ] 
+test_data <- heart_disease_data[-train_idx, ]
+```
+
+# LASSO
+```{r}
+# lasso regression
+require(glmnet)
+y <- train_data$thalach
+x <- model.matrix(y~.,data = train_data[ , -8])
+lasso_model <- cv.glmnet(x, y, alpha = 1)
+lambda_lasso <- lasso_model$lambda.min
+
+# plot mse vs. lambda
+par(mar = c(7, 4, 2.2, 0.5))
+plot(lasso_model, cex = 0.8)
+
+# choose best model
+best_lasso_model <- glmnet(x, y, alpha = 1, lambda = lambda_lasso)
+coef(best_lasso_model)
+
+# making predictions
+new_x <- model.matrix(test_data$thalach~.,test_data[ , -8])
+y_pred_lasso <- predict(best_lasso_model, s = lambda_lasso, newx = new_x)
+plot(y_pred_lasso, test_data$thalach, xlab = "Predicted Values", ylab = "Observed Values")
+abline(1, 1)
+```
+
+# Ridge Regression
+
+Ridge model is a method of estimating the coefficients of multi-variable linear regression.Different from Ordinary Least Square(OLS) method, Ridge regression, including a penalty term, provides a trade-off between variance and bias, which are the two criteria for MSE what we want to minimize.
+
+Here, we fit a Ridge regression with the optimal lambda found through cross validation 
+
+```{r}
+# Compare the coefficient
+ridge_model <- cv.glmnet(x, y, alpha = 0)
+lambda_ridge <- ridge_model$lambda.min
+print(paste("By cross validation between 10 folds, the optimal lambda is", round(lambda_ridge,4)))
+```
+
+
+
+```{r,fig.cap="MSE vs. Lambda"}
+par(mar = c(7, 4, 2.2, 0.5))
+plot(ridge_model, cex = 0.8)
+abline(v = log(lambda_ridge), col = "purple", lty = 2)
+```
+Fig. X visualized how MSE change with the regularization parameter $\lambda$. As our goal is to minimize MSE, we locate the $log(\lambda)$ correspond to the smallest MSE, which shown by the purple line and select the lambda as the regularization factor. 
+
+```{r,include=FALSE}
+# choose best model
+best_ridge_model <- glmnet(x, y, alpha = 0, lambda = lambda_ridge)
+coef(best_ridge_model)
+```
+
+We then fit the model with the penalty term and obtain the estimated coefficients. In terms of variable selection, more variables are considered significant than forward step-wise selection (the method used previous).
+Specifically, `oldpeak`,`ca`, and `thal` are also considered as significant (the |coefficient| > 0.5). The final model is
+
+$$
+\begin{aligned}
+\text{max heart rate}_i = 168.2-0.65\cdot age_i&+8.31\cdot1\{cp_i=1\}+3.79\cdot1\{cp_i=2\}
+ +12.43\cdot1\{cp_i=3\}\\
+ &-2.04\cdot1\{restecg_i=1\}-9.94\cdot1\{restecg_i=2\}-7.97\cdot1\{exang_i = 1\}\\
+ &-1.25\cdot oldpeak_i-4.49\cdot1\{slope_i=1\}+7.08\cdot1\{slope_i=2\}-0.68\cdot ca_i\\
+ &+1.22thal_i+6.10\cdot1\{target_i=1\}
+\end{aligned}
+$$
+
+# Making Predictions
+```{r}
+y_pred_ridge <- predict(best_ridge_model, s = lambda_ridge, newx = new_x)
+plot(y_pred_ridge, test_data$thalach, xlab = "Predicted Values", ylab = "Observed Values")
+abline(1, 1)
+```
+Fig. Y is predicted value vs. observed value, which visualizes the accuracy of the prediction with ridge regression. The dots, as expected, are spread around y=x, which indicates that the ridge regression, though with some outliers, provided a relatively good prediction. 
+
+
+```{r}
+fit <- lm(thalach ~ slope + age + cp + exang + target + trestbps + restecg, data = train_data)
+y_pred_mlr <- predict(fit, newdata = test_data)
+```
+
+
+```{r}
+y_pred_lasso <- as.data.frame(y_pred_lasso)
+y_pred_ridge <- as.data.frame(y_pred_ridge)
+y_pred_mlr <- as.data.frame(y_pred_mlr)
+y_observed_og <- test_data$thalach
+
+colnames(y_pred_lasso) <- c("values")
+colnames(y_pred_ridge) <- c("values")
+colnames(y_pred_mlr) <- c("values")
+
+y_pred_lasso$Source <- rep("Lasso", length(y_pred_lasso))
+y_pred_ridge$Source <- rep("Ridge", length(y_pred_ridge))
+y_pred_mlr$Source <- rep("MLR", length(y_pred_mlr))
+
+combined_preds_og <- rbind(y_pred_lasso, y_pred_ridge, y_pred_mlr)
+y_observed <-rep(y_observed_og, 3)
+combined_preds <- cbind(y_observed, combined_preds_og)
+```
+
+
+# making combined plot
+```{r,include=FALSE}
+combined_plot <- ggplot(combined_preds, aes(x = y_observed, y = values, color = Source)) +
+  geom_point() + 
+  geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed")+
+  labs(x = "Observed Values", y = "Predicted Values")
+  
+```
+
+```{r,fig.cap="Combined Plot"}
+combined_plot
+```
+
+# Model Comparison
+The plot shows that the predictions between three models do not differentiate much. Specifically, the observations of three models, represented by three different colors, located close to each other along the line $y=x$.
+
+Specifically, dots of LASSO (red) and Ridge(blue) are closely located together and the small deviation could be caused by differences between the penalty term (i.e. $\lambda$).
+
+The dots of OLS(green) deviated relatively more from the others which could be a result of different predictor selection. Specifically, lasso and ridge regression consider three more variables significant. However, the deviation is not significant, so it is reasonable to conclude that predictor are consistently selected.
+
+|Predictors| Lasso | Ridge  | MLR |
+|----------|----------|----------|-----------|
+| Age | Row 1, Col 2 | Row 1, Col 3 |Row 1, Col 3|
+| Sex = 1 | Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Chest Pain type =1 | Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Chest Pain type=2 | Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Chest Pain type=3 | Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Rest bps| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Serum Cholesterol| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Fasting blood sugar =1| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Rest ecg=1| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Rest ecg=2| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Exercise angina=1| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| oldpeak| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| ST slpoe =1| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| ST slope =2| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+| Target =1| Row 2, Col 2 | Row 2, Col 3 |Row 1, Col 3|
+
+
+From the table above, which shows the estimated coefficients from three regression methods, it further convinced that the coefficients are inherently and similarly estimated. 
+
+# Innovation
+
+Logistic regression is used to predict the outcome of a binary variable, for example 0 or 1. Suppose the probability of 1 occurs is p and the probability of 1 does not occur is 1-p, then the ratio of 1 occurring vs. 1 not-occurring is simply $\frac{1}{1-p}$. 
+
+Since we then need a linear regression to estimate the coefficient, we then apply log map the probability to real number for linear regression, that is $$Logit(p) = log(\frac{p}{1-p})$$
+
+Apply $logit(p)$ as the new response and fit a linear model with the predictor variables. 
+
+$$
+Logit(p) = \beta_0 + \beta_1x_1+\beta_2x_2+\cdots+\beta_nx_n
+$$
+
+Then we inverse the logit to get $p$, namely, 
+$$
+p = \frac{1}{1+e^{-(\beta_0 + \beta_1x_1+\beta_2x_2+\cdots+\beta_nx_n)}}
+$$
+we map back to the probability which lies between the interval [0,1]. 
