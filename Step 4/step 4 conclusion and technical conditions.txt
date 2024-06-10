@@ -1,0 +1,19 @@
+
+# Conclusion
+
+After applying RR and LASSO to our model, we have found similarly selected predictors, and also the predictions are generally promising compared to observed data. When compared with the model we had from MLR, several predictors are reconsidered and we still have relatively consistent predicted result. It is also noteworthy that when looking at the superimposed graph, we had outliners that distributing similarly across three methods, which indicating that further steps are needed to take care of them. 
+
+
+
+
+# Technical Conditions
+
+1. The response variable is binary. This fits our model that the response is the target variable, which indicates whether the patient have heart disease.
+
+2. The model should have minimal multicollinearity. The LASSO regression is removing predictors that are having high correlations. 
+
+3. Sufficient sample size and independent observation. Our dataset is large and the patients conditions are independent.
+
+4. There shouldn't be prefect separation. We don't have some predictors that can precisely predict the outcome.
+
+5. There shouldn't be highly influential outliners. For this one we didn't particularly remove the outliners.
