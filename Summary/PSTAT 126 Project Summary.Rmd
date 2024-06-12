@@ -45,12 +45,13 @@ train_data <- heart_disease_data[train_idx, ]
 test_data <- heart_disease_data[-train_idx, ]
 ```
 
-# About the data
+# Introduction
 
-This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risks for heart disease as well as whether or not they eventually end up developing heart disease. The data set originally contains 1025 observations. For the sake of clearness of the scatter plot, we randomly choose 500 from the original dataset.
-
+In this project, we used multivariate linear regression to determine potential predictors of maximum heart rate. We used an OLS method to fit a model, and ultimately chose seven predictors: `slope`, `age`, `cp`, `exang`, `target`, `trestbps` and `restecg`. Specifically, an OLS method aims to minimize the sum of squared residuals. Finally, we used logistic regression to examine whether patients have heart disease based on certain predictors selected by LASSO.
 
 # Data Description
+
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risks for heart disease as well as whether or not they eventually end up developing heart disease. The data set originally contains 1025 observations. For the sake of convenience of the scatter plot, we randomly chose 500 from the original dataset.
 
 The `age` variable is a numeric variable that lists the age of the patient in years. The `sex` variable is a binary variable that states the sex of the patient, with 0 representing female and 1 representing male. The `cp` variable is a categorical variable that classifies the type of chest pain the patient is experiencing; 0 represents typical angina, 1 represents atypical angina, 2 represents non-anginal pain, and 3 represents asymptomatic. The `trestbps` variable is a numeric variable that states the resting blood pressure in mmHg.
 
@@ -80,7 +81,7 @@ The correlation matrix of numeric data shows that there isn't a strong positive 
 
 # Selecting Model
 
-We decided to use an OLS model because _____.
+We decided to use an OLS model because our predictors were not highly correlated and we have a relatively large sample size compared to the number of predictors, so variable selection is not as big of an issue.
 
 We used a forward step-wise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
 
@@ -113,7 +114,7 @@ plot(x = test_data$thalach, y = y_pred_mlr, xlab = "Observed Data", ylab = "Pred
 abline(a = 0, b = 1, lwd = 2, col = "green")
 ```
 
-# Checking Influential Points
+## Checking Influential Points
 
 To check outliers, leverage points, and influence points, we created graphs of the residuals, the diagonal values of the hat matrix, and Cook's distance. In each graph, we selected the largest value in red to visualize it on each plot.
 
@@ -175,6 +176,8 @@ combined_plot <- grid.arrange(p1, p2, ncol = 2)
 ```
 
 From the plot and the best fit lines (Fig. 4), the lines only change a little for the model with or without the influential points, so we shouldn't be concerned about those point affecting the results.
+
+\newpage
 
 # Innovation
 
@@ -238,7 +241,7 @@ summary(log_model)
 
 ## ROC Curve
 
-A tool to visualize logistic regression is a ROC (Receiver Operating Characteristic) curve, in which the true positive rate (sensitivity) is plotted against the false positive rate (1 - specificity) at different threshold values. The closer the ROC curve is to the top-left corner, the better the model is at distinguishing between positive and negative classes. A model with no discriminative power will have an ROC curve along the diagonal line, essentially equivalent to random guessing. As can be seen in Fig. 6, the ROC curve is relatively close to the top-left corner, indicating that the model has high sensitivity and high specificity.
+A tool to visualize logistic regression is a ROC (Receiver Operating Characteristic) curve, in which the true positive rate (sensitivity) is plotted against the false positive rate (1 - specificity) at different threshold values. The closer the ROC curve is to the top-left corner, the better the model is at distinguishing between positive and negative classes. A model with no discriminative power will have an ROC curve along the diagonal line, essentially equivalent to random guessing. As can be seen in Fig. 5, the ROC curve is relatively close to the top-left corner, indicating that the model has high sensitivity and high specificity.
 
 ```{r, fig.cap = "ROC Curve for logisitic model"}
 predicted_prob <- predict(log_model, type = "response")
@@ -271,8 +274,12 @@ optimal_cutoff <- coords(roc_curve, "best", ret = "threshold")
 print(paste("Optimal threshold value:", optimal_cutoff))
 ```
 
-## Conclusion
+# Conclusion
 
-We first used forward step-wise model selection to determine our final model, which is
+Overall, our analysis revealed some interesting results. We determined that heart disease, age, quality of blood flow to the heart, exercise induced angina, chest pain type, resting blood pressure, and resting electrocardiogram results are major factors when examining maximum heart rate. However, our data set does not account for other important factors such as family history, diet, environment, and mental health, which all play an important role that should be evaluated in further studies.
 
-with a $R^2 = 0.4937$, which means that our model captures nearly 50% of variation in the response. We then conducted residual and influential point analysis.
+Studying maximum heart rate is crucial as it is a key component in cardiovascular health. Maximum heart rate can be used to determine a recommended level of exercise intensity and prevent individuals from overexertion and reduces the risk of heart-related incidents during exercise. Additionally, doctors often use maximum heart rate to monitor cardiovascular health and adjust medication dosages.
+
+We were particularly fascinated by our logistic model, which was fairly accurate in determining whether or not patients had heart disease. However, logistic models are limited by their sensitivity to outliers and their tendency to overfit the data. Going forward, we would also like to examine how other factors can be used to predict heart disease in patients.
+
+In conclusion, while our results yielded valuable insights into studying maximum heart rate, further research is needed to better examine its role in heart function. In the future, we are excited to examine new methods of regression to study maximum heart rate.
