@@ -1,0 +1,278 @@
+---
+title: "PSTAT 126 Project Summary"
+author: "Minu Pabbathi, Ziqian Zhao, Paul Zhang"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = F,
+                      fig.width = 5,
+                      fig.height = 4)
+# load packages
+library(glmnet)
+library(pROC)
+library(tidyverse)
+library(faraway)
+library(skimr)
+library(readr)
+library(ggcorrplot)
+library(GGally)
+library(modelr)
+library(broom)
+library(MASS)
+library(gridExtra)
+
+# load dataset
+heart_disease_data <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+heart_disease_data$sex<-as.factor(heart_disease_data$sex)
+heart_disease_data$cp<-as.factor(heart_disease_data$cp)
+heart_disease_data$fbs<-as.factor(heart_disease_data$fbs)
+heart_disease_data$restecg<-as.factor(heart_disease_data$restecg)
+heart_disease_data$exang<-as.factor(heart_disease_data$exang)
+heart_disease_data$slope<-as.factor(heart_disease_data$slope)
+heart_disease_data$target<-as.factor(heart_disease_data$target)
+
+# split data into training and testing
+set.seed(7)
+train_idx <- sample(1:nrow(heart_disease_data), 0.8 * nrow(heart_disease_data))
+train_data <- heart_disease_data[train_idx, ] 
+test_data <- heart_disease_data[-train_idx, ]
+```
+
+# About the data
+
+This data set dates from 1988 and consists of four databases: Cleveland, Hungary, Switzerland, and Long Beach V. It contains information about patients and risks for heart disease as well as whether or not they eventually end up developing heart disease. The data set originally contains 1025 observations. For the sake of clearness of the scatter plot, we randomly choose 500 from the original dataset.
+
+
+# Data Description
+
+The `age` variable is a numeric variable that lists the age of the patient in years. The `sex` variable is a binary variable that states the sex of the patient, with 0 representing female and 1 representing male. The `cp` variable is a categorical variable that classifies the type of chest pain the patient is experiencing; 0 represents typical angina, 1 represents atypical angina, 2 represents non-anginal pain, and 3 represents asymptomatic. The `trestbps` variable is a numeric variable that states the resting blood pressure in mmHg.
+
+The `chol` variable is a numeric data which give an overview of person's cholesterol levels. The `fbs` variable is a binary data with 1 means the fast blood sugar is greater than 120mg/dl, and 0 means the fast blood sugar is not. The `restecg` variable is a nominal data with scale of 0 (normal), 1 (abnormality in ST-T waves), and 2 (show left ventricular hypertrophy), which record the resting electrocardiogram results. The `thalach` variable is a numeric data which records the maximum heart rate achieved.
+
+The variable `exang` indicates that if the patient have exercise induced angina (chest pain), which is shown with 0 indicating "no" and 1 indicating "yes". The variable `oldpeak` is a float type data records the ST depression, which is a measure of abnormality of an electrocardiogram, and the measurement is in unit depression. The variable `slope` is the slope of the peak exercise ST segment, which is an electrocardiography read out indicating quality of blood flow to the heart, and the data are in nominal type including 0 (upsloping), 1 (flat) and 2 (downsloping). Finally, the variable `target` is a binary data showing whether the patient is having heart disease (1 = having heart disease and 0 = normal).
+
+# Summary Statistics and Graphs
+
+```{r}
+skim(heart_disease_data)
+```
+
+# Correlation
+
+The following correlation matrix represent the relationship between different variables and the interaction between each other. 
+
+Each cell represents a correlation coefficient, the red color, which has a coefficient of 1, represents the strong positive correlation between two variables; whereas, the white color with coefficient of 0 indicates little (no) correlation between two variables, and the purple color with coefficient of -1 indicates a strong negative correlation.
+
+```{r,fig.height=4,fig.width=4}
+heart_disease_data_1 <- read.csv("~/Documents/GitHub/s24-pstat126-project/dataset/heart_disease_data_1.csv")
+corr <- round(cor(heart_disease_data_1),1)
+ggcorrplot(corr,lab=F)
+```
+
+The correlation matrix of numeric data shows that there isn't a strong positive correlation between any two variables, and between maximum heart rate achieved and target; a relatively strong negative correlation between ST slope and oldpeak; and little correlation between sex and chest pain type, cholesterol and fasting blood sugar.
+
+# Selecting Model
+
+We decided to use an OLS model because _____.
+
+We used a forward step-wise model, meaning we assumed no relationship between the variables, and then added predictors one by one until no other significant predictors were left.
+
+Our criteria for choosing the variables is based on the AIC, meaning that starting with an intercept-only model, we add the variable with the lowest AIC value at a time, then re-examine the new model to find the next variable until no variables significant.
+
+By going through forward step-wise selection, we chose 7 predictors for the model, which are `slope`, `age`, `cp`, `exang`, `target`, `trestbps` and `restecg`.
+
+```{r}
+fit <- lm(thalach ~ slope + age + cp + exang + target + trestbps + restecg, data = train_data)
+y_pred_mlr <- predict(fit, newdata = test_data)
+summary(fit)
+```
+
+## Finding $R^2$ of Predicted Values
+
+About 49% of the variance in maximum heart rate in the test data is accounted for by the slope of the peak exercise ST segment, age, chest pain type, exercise-induced angina, heart disease, resting blood pressure, and resting ecg.
+
+```{r}
+SS.total      <- sum((test_data$thalach - mean(test_data$thalach))^2)
+SS.residual   <- sum((test_data$thalach - y_pred_mlr)^2)
+SS.regression <- sum((y_pred_mlr - mean(test_data$thalach))^2)
+
+R2<-SS.regression/SS.total
+
+print(paste("R-square value on test data:", R2))
+```
+
+```{r,fig.cap="Plotting Predictions for OLS Model"}
+plot(x = test_data$thalach, y = y_pred_mlr, xlab = "Observed Data", ylab = "Predicted Data")
+abline(a = 0, b = 1, lwd = 2, col = "green")
+```
+
+# Checking Influential Points
+
+To check outliers, leverage points, and influence points, we created graphs of the residuals, the diagonal values of the hat matrix, and Cook's distance. In each graph, we selected the largest value in red to visualize it on each plot.
+
+The residuals appear randomly scattered with equal variance and no obvious pattern, and based on the Q-Q plot, are approximately normal, indicating that the model is a good fit.
+
+```{r,fig.cap="Influential Points Analysis"}
+p_caseinf <- augment(fit, train_data) %>%
+  pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
+  ggplot(aes(x = .rownames, y = value)) +
+  facet_wrap(~ name, scales = 'free_y', nrow = 3) + # looks better with vertical faceting
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) + # add line at zero
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.25)) + # rotates and aligns labels
+  labs(x = '', y = '')
+
+unusual_obs <- augment(fit, train_data) %>% 
+  pivot_longer(cols = c(.resid, .hat, .cooksd)) %>%
+  group_by(name) %>%
+  slice_max(order_by = abs(value), n = 1) %>%
+  ungroup()
+
+p_caseinf + geom_point(data = unusual_obs, color = 'red')
+```
+
+```{r, fig.cap = "Q-Q Plot of Residuals"}
+res <- resid(fit)
+qqnorm(res)
+qqline(res)
+```
+
+We then refit the model without the influential point:
+
+```{r}
+unusual_idx <- augment(fit, train_data) %>%
+  mutate(idx = row_number()) %>%
+  slice_max(order_by = abs(.resid), n = 1) %>%
+  pull(idx)
+
+fit_dropped <- lm(thalach ~ target + age + slope + exang + cp + trestbps + restecg, data = train_data[-unusual_idx, ])
+summary(fit_dropped)
+```
+
+```{r}
+# visualize
+p1<-ggplot(train_data, aes(x = age, y = thalach,color = cp)) + 
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ x,se = FALSE) +
+  ggtitle("Before ")
+
+p2<-ggplot(train_data[-unusual_idx, ], aes(x = age, y = thalach, color = cp)) + 
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ x,se = FALSE) +
+  ggtitle("After")
+```
+
+
+```{r,warning=FALSE,fig.cap="With/Without Influential Points",fig.width=8}
+combined_plot <- grid.arrange(p1, p2, ncol = 2)
+```
+
+From the plot and the best fit lines (Fig. 4), the lines only change a little for the model with or without the influential points, so we shouldn't be concerned about those point affecting the results.
+
+# Innovation
+
+Logistic regression is used to predict the outcome of a binary variable, for example 0 or 1. Suppose the probability of 1 occurs is p and the probability of 1 does not occur is 1-p, then the ratio of 1 occurring vs. 1 not-occurring is simply $\frac{1}{1-p}$. 
+
+Since we then need a linear regression to estimate the coefficient, we then apply log map the probability to real number for linear regression, that is $$Logit(p) = log(\frac{p}{1-p})$$
+
+Apply $logit(p)$ as the new response and fit a linear model with the predictor variables. 
+
+$$
+Logit(p) = \beta_0 + \beta_1x_1+\beta_2x_2+\cdots+\beta_nx_n
+$$
+
+Then we inverse the logit to get $p$, namely, 
+$$
+p = \frac{1}{1+e^{-(\beta_0 + \beta_1x_1+\beta_2x_2+\cdots+\beta_nx_n)}}
+$$
+
+## Technical Conditions
+
+1. The response variable is binary. This fits our model that the response is the target variable, which indicates whether the patient have heart disease.
+
+2. The model should have minimal multicollinearity. The LASSO regression is removing predictors that are having high correlations. 
+
+3. Sufficient sample size and independent observation. Our dataset is large and the patients conditions are independent.
+
+4. There shouldn't be prefect separation. We don't have some predictors that can precisely predict the outcome.
+
+5. There shouldn't be highly influential outliners. For this one we didn't particularly remove the outliners.
+
+## Method Justification
+
+To explore further models, we decided to use logistic regression since we were interested in seeing how the variables can be used to predict heart disease, or the `target` variable. Since heart disease is a binary variable, OLS, ridge, and LASSO cannot be used since the response variable in these cases must be continuous.
+
+## Fitting Logistic Model
+
+```{r, include = F}
+# variable selection using lasso regression
+x_log <- model.matrix(target ~ ., data = train_data)[, -14]
+y_log <- train_data$target
+
+# Fit lasso model using cross-validation to find optimal lambda
+lasso_model_log <- cv.glmnet(x_log, y_log, family = "binomial", alpha = 1)
+
+# Optimal lambda
+set.seed(2)
+lambda_optimal_log <- lasso_model_log$lambda.min
+print(paste("Best lambda:", lambda_optimal_log))
+
+# Coefficients at optimal lambda
+coef(lasso_model_log, s = lambda_optimal_log)
+```
+
+First, we used LASSO to determine which variables to include in the model. Based on the results from the LASSO regression, we fit a logistic model using the non-zero coefficients.
+
+```{r}
+log_model <- glm(target ~ age + sex + cp + trestbps + fbs + restecg + thalach + exang + slope + ca + thal, data = train_data, family = binomial)
+summary(log_model)
+```
+
+
+## ROC Curve
+
+A tool to visualize logistic regression is a ROC (Receiver Operating Characteristic) curve, in which the true positive rate (sensitivity) is plotted against the false positive rate (1 - specificity) at different threshold values. The closer the ROC curve is to the top-left corner, the better the model is at distinguishing between positive and negative classes. A model with no discriminative power will have an ROC curve along the diagonal line, essentially equivalent to random guessing. As can be seen in Fig. 6, the ROC curve is relatively close to the top-left corner, indicating that the model has high sensitivity and high specificity.
+
+```{r, fig.cap = "ROC Curve for logisitic model"}
+predicted_prob <- predict(log_model, type = "response")
+roc_curve <- roc(train_data$target, predicted_prob)
+plot(roc_curve, main = "ROC Curve")
+```
+
+## AUC
+
+The AUC, or area under the curve, is a measure of how well the model is able to discriminate between positive and negative cases. The AUC ranges from 0 to 1, with the following interpretations:
+
+ - < 0.5: No discriminative power (equivalent to random guessing).
+ - 0.5 - 0.7: Poor discrimination.
+ - 0.7 - 0.8: Acceptable discrimination.
+ - 0.8 - 0.9: Excellent discrimination.
+ - \> 0.9: Outstanding discrimination.
+
+```{r}
+print(paste("AUC:", auc(roc_curve)))
+```
+
+Since the AUC is above 0.9, we can conclude that our model is highly accurate at distinguishing between cases.
+
+## Optimal Threshold Value
+
+Based on the ROC curve, we can determine the optimal threshold value, which is the value that maximizes the distance from the diagonal line (representing random chance) or maximizes the area under the ROC curve (AUC). If the predicted probability is less than the threshold, then the response can be classified as 0, or no heart disease. If the predicted probability is greater than threshold, then the response can be classified as 1, or having heart disease.
+
+```{r}
+optimal_cutoff <- coords(roc_curve, "best", ret = "threshold")
+print(paste("Optimal threshold value:", optimal_cutoff))
+```
+
+## Conclusion
+
+We first used forward step-wise model selection to determine our final model, which is
+
+with a $R^2 = 0.4937$, which means that our model captures nearly 50% of variation in the response. We then conducted residual and influential point analysis.
