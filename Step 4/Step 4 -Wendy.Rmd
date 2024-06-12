@@ -3,8 +3,8 @@ title: "Step 4-Wendy"
 author: "Ziqian Zhao"
 date: "2024-06-09"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -18,6 +18,7 @@ library(tidyverse)
 library(broom)
 library(MASS)
 library(ggplot2)
+library(glmnet)
 ```
 
 ```{r}
@@ -41,12 +42,31 @@ train_data <- heart_disease_data[train_idx, ]
 test_data <- heart_disease_data[-train_idx, ]
 ```
 
+# Scale the data
+
+```{r}
+# Function to scale numeric columns
+scale_numeric <- function(df) {
+  for (col in names(df)) {
+    if (is.numeric(df[[col]])) {
+      df[[col]] <- scale(df[[col]])
+    }
+  }
+  return(df)
+}
+y <- train_data$thalach
+sacled_train_data <- scale_numeric(train_data[ ,-8])
+x <- model.matrix(y~.,data = sacled_train_data)
+
+scaled_new_x <- scale_numeric(test_data[ ,-8])
+new_x <- model.matrix(test_data$thalach~.,scaled_new_x)
+```
+
 # LASSO
 ```{r}
 # lasso regression
-require(glmnet)
-y <- train_data$thalach
-x <- model.matrix(y~.,data = train_data[ , -8])
+#y <- train_data$thalach
+#x <- model.matrix(y~.,data = train_data[ , -8])
 lasso_model <- cv.glmnet(x, y, alpha = 1)
 lambda_lasso <- lasso_model$lambda.min
 
@@ -59,7 +79,7 @@ best_lasso_model <- glmnet(x, y, alpha = 1, lambda = lambda_lasso)
 coef(best_lasso_model)
 
 # making predictions
-new_x <- model.matrix(test_data$thalach~.,test_data[ , -8])
+# new_x <- model.matrix(test_data$thalach~.,test_data[ , -8])
 y_pred_lasso <- predict(best_lasso_model, s = lambda_lasso, newx = new_x)
 plot(y_pred_lasso, test_data$thalach, xlab = "Predicted Values", ylab = "Observed Values")
 abline(1, 1)
@@ -72,6 +92,22 @@ Ridge model is a method of estimating the coefficients of multi-variable linear 
 Here, we fit a Ridge regression with the optimal lambda found through cross validation 
 
 ```{r}
+#require(glmnet)
+#y <- train_data$thalach
+
+# Function to scale numeric columns
+#scale_numeric <- function(df) {
+#  for (col in names(df)) {
+#    if (is.numeric(df[[col]])) {
+#      df[[col]] <- scale(df[[col]])
+#    }
+#  }
+#  return(df)
+#}
+#sacled_train_data <- scale_numeric(train_data[ ,-8])
+#x <- model.matrix(y~.,data = sacled_train_data)
+#scaled_new_x <- scale_numeric(test_data[ ,-8])
+#new_x <- model.matrix(test_data$thalach~.,scaled_new_x)
 # Compare the coefficient
 ridge_model <- cv.glmnet(x, y, alpha = 0)
 lambda_ridge <- ridge_model$lambda.min
@@ -109,7 +145,7 @@ $$
 # Making Predictions
 ```{r}
 y_pred_ridge <- predict(best_ridge_model, s = lambda_ridge, newx = new_x)
-plot(y_pred_ridge, test_data$thalach, xlab = "Predicted Values", ylab = "Observed Values")
+plot(test_data$thalach, y_pred_ridge, ylab = "Predicted Values", xlab = "Observed Values")
 abline(1, 1)
 ```
 Fig. Y is predicted value vs. observed value, which visualizes the accuracy of the prediction with ridge regression. The dots, as expected, are spread around y=x, which indicates that the ridge regression, though with some outliers, provided a relatively good prediction. 
